@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentSnapshot,
   getDoc,
   getDocs,
   increment,
@@ -11,6 +12,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   Unsubscribe,
   updateDoc,
   where,
@@ -393,6 +395,58 @@ export async function isFollowingUser(myUid: string, targetUid: string): Promise
 export async function fetchDiscoverMembers(maxCount = 24): Promise<UserProfile[]> {
   try {
     const q = query(collection(db, 'users'), orderBy('followersCount', 'desc'), limit(maxCount));
+    const snap = await getDocs(q);
+    return snap.docs
+      .map((d) => d.data() as UserProfile)
+      .filter((u) => !u.isSuspended);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, 'users');
+  }
+}
+
+export async function fetchDiscoverMembersPage(
+  lastSnapshot: DocumentSnapshot | null = null,
+  pageSize = 20
+): Promise<{ members: UserProfile[]; lastDoc: DocumentSnapshot | null; hasMore: boolean }> {
+  const safeLimit = Math.min(100, Math.max(1, Math.round(pageSize)));
+  try {
+    const q = lastSnapshot
+      ? query(
+          collection(db, 'users'),
+          orderBy('followersCount', 'desc'),
+          startAfter(lastSnapshot),
+          limit(safeLimit)
+        )
+      : query(collection(db, 'users'), orderBy('followersCount', 'desc'), limit(safeLimit));
+    const snap = await getDocs(q);
+    const members = snap.docs
+      .map((d) => d.data() as UserProfile)
+      .filter((u) => !u.isSuspended);
+    const nextLast = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+    return {
+      members,
+      lastDoc: nextLast,
+      hasMore: snap.docs.length === safeLimit,
+    };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, 'users');
+  }
+}
+
+export async function searchMembersByPrefix(
+  term: string,
+  maxCount = 20
+): Promise<UserProfile[]> {
+  const clean = term.trim().toLowerCase().replace(/^@/, '');
+  if (!clean) return [];
+  const safeLimit = Math.min(100, Math.max(1, Math.round(maxCount)));
+  try {
+    const q = query(
+      collection(db, 'users'),
+      where('usernameLower', '>=', clean),
+      where('usernameLower', '<=', `${clean}\uf8ff`),
+      limit(safeLimit)
+    );
     const snap = await getDocs(q);
     return snap.docs
       .map((d) => d.data() as UserProfile)

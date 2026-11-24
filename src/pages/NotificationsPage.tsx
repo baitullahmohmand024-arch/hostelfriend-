@@ -21,6 +21,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { FriendRequest, NotificationItem } from '../types';
 import {
+  APP_NOTIFICATION_LOGO_URL,
+  APP_NOTIFICATION_SENDER_NAME,
   clearAllNotifications,
   deleteNotificationById,
   markAllNotificationsRead,
@@ -127,57 +129,57 @@ export function NotificationsPage({
     switch (canonical) {
       case 'NEW_MESSAGE':
         return {
-          icon: <MessageSquare className="w-3.5 h-3.5 text-[#050505]" />,
-          bg: 'bg-[#F5C542]',
+          icon: <MessageSquare className="w-3.5 h-3.5 text-accent-fg" />,
+          bg: 'bg-accent',
           label: 'Message',
         };
       case 'POST_LIKE':
         return {
-          icon: <Heart className="w-3.5 h-3.5 text-[#F5C542] fill-[#F5C542]" />,
-          bg: 'bg-[#19191D] border border-[#F5C542]/40',
+          icon: <Heart className="w-3.5 h-3.5 text-accent fill-accent" />,
+          bg: 'bg-surface-hover border border-accent/40',
           label: 'Like',
         };
       case 'POST_COMMENT':
         return {
-          icon: <MessageCircle className="w-3.5 h-3.5 text-[#F5C542]" />,
-          bg: 'bg-[#19191D] border border-[#F5C542]/40',
+          icon: <MessageCircle className="w-3.5 h-3.5 text-accent" />,
+          bg: 'bg-surface-hover border border-accent/40',
           label: 'Comment',
         };
       case 'COMMENT_REPLY':
         return {
-          icon: <CornerDownRight className="w-3.5 h-3.5 text-[#F5C542]" />,
-          bg: 'bg-[#19191D] border border-[#F5C542]/40',
+          icon: <CornerDownRight className="w-3.5 h-3.5 text-accent" />,
+          bg: 'bg-surface-hover border border-accent/40',
           label: 'Reply',
         };
       case 'NEW_FOLLOWER':
         return {
-          icon: <UserPlus className="w-3.5 h-3.5 text-[#F5C542]" />,
-          bg: 'bg-[#19191D] border border-[#F5C542]/40',
+          icon: <UserPlus className="w-3.5 h-3.5 text-accent" />,
+          bg: 'bg-surface-hover border border-accent/40',
           label: 'Follow',
         };
       case 'FRIEND_REQUEST':
         return {
-          icon: <UserPlus className="w-3.5 h-3.5 text-[#050505]" />,
-          bg: 'bg-[#F5C542]',
+          icon: <UserPlus className="w-3.5 h-3.5 text-accent-fg" />,
+          bg: 'bg-accent',
           label: 'Friend Request',
         };
       case 'FRIEND_REQUEST_ACCEPTED':
         return {
-          icon: <UserCheck className="w-3.5 h-3.5 text-[#050505]" />,
-          bg: 'bg-[#F5C542]',
+          icon: <UserCheck className="w-3.5 h-3.5 text-accent-fg" />,
+          bg: 'bg-accent',
           label: 'Friend Accepted',
         };
       case 'USER_MENTION':
         return {
-          icon: <AtSign className="w-3.5 h-3.5 text-[#F5C542]" />,
-          bg: 'bg-[#19191D] border border-[#F5C542]/40',
+          icon: <AtSign className="w-3.5 h-3.5 text-accent" />,
+          bg: 'bg-surface-hover border border-accent/40',
           label: 'Mention',
         };
       case 'IMPORTANT_APP_ANNOUNCEMENT':
       default:
         return {
-          icon: <Megaphone className="w-3.5 h-3.5 text-[#050505]" />,
-          bg: 'bg-gradient-to-br from-[#F8D162] to-[#D99B19]',
+          icon: <Megaphone className="w-3.5 h-3.5 text-accent-fg" />,
+          bg: 'bg-gradient-to-br from-accent-soft to-accent-deep',
           label: 'Announcement',
         };
     }
@@ -284,10 +286,10 @@ export function NotificationsPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[#FFFFFF]">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">
             Notifications
           </h1>
-          <p className="text-xs text-[#A5A5AD] mt-0.5">
+          <p className="text-xs text-ink-muted mt-0.5">
             Messages, friend requests, likes, comments, replies, mentions & announcements
           </p>
         </div>
@@ -297,9 +299,9 @@ export function NotificationsPage({
             <button
               type="button"
               onClick={handleMarkAllRead}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-[#F5C542]/30 bg-[#111114] text-[#FFFFFF] hover:border-[#F5C542]/60 hover:bg-[#19191D] inline-flex items-center gap-1.5 transition-colors"
+              className="glass-btn px-3.5 py-2 rounded-xl text-xs font-semibold border-accent/30 text-ink inline-flex items-center gap-1.5"
             >
-              <CheckCheck className="w-4 h-4 text-[#F5C542]" />
+              <CheckCheck className="w-4 h-4 text-accent" />
               <span>Mark all read</span>
             </button>
           )}
@@ -307,7 +309,7 @@ export function NotificationsPage({
             <button
               type="button"
               onClick={() => setConfirmClearOpen(true)}
-              className="px-3.5 py-2 rounded-xl text-xs font-medium border border-white/10 bg-[#111114] text-[#A5A5AD] hover:text-rose-400 hover:border-rose-500/30 inline-flex items-center gap-1.5 transition-colors"
+              className="glass-btn px-3.5 py-2 rounded-xl text-xs font-medium text-ink-muted hover:text-rose-400 hover:border-rose-500/30 inline-flex items-center gap-1.5"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Clear all</span>
@@ -322,16 +324,16 @@ export function NotificationsPage({
           (browserPermission === 'granted' &&
             notificationPreferences !== null &&
             !notificationPreferences.pushEnabled)) && (
-        <div className="rounded-2xl bg-[#111114] border border-[#F5C542]/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+        <div className="rounded-2xl glass-card border-accent/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#F5C542]/15 border border-[#F5C542]/35 flex items-center justify-center shrink-0">
-              <BellRing className="w-4 h-4 text-[#F5C542]" />
+            <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/35 flex items-center justify-center shrink-0">
+              <BellRing className="w-4 h-4 text-accent" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[#FFFFFF]">
+              <p className="text-sm font-semibold text-ink">
                 Get real-time alerts even when Hostel Friend is closed
               </p>
-              <p className="text-xs text-[#A5A5AD] mt-0.5">
+              <p className="text-xs text-ink-muted mt-0.5">
                 Enable push notifications for instant messages, friend requests, and replies.
               </p>
             </div>
@@ -362,17 +364,17 @@ export function NotificationsPage({
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 hf-press ${
               tab === item.id
-                ? 'bg-gradient-to-r from-[#F5C542] to-[#D99B19] text-[#050505] shadow-[0_2px_12px_rgba(245,197,66,0.28)]'
-                : 'bg-[#111114] border border-white/[0.08] text-[#A5A5AD] hover:text-[#FFFFFF]'
+                ? 'bg-gradient-to-r from-accent to-accent-deep text-accent-fg shadow-[0_2px_12px_rgba(245,197,66,0.28)]'
+                : 'glass-btn text-ink-muted hover:text-ink'
             }`}
           >
             <span>{item.label}</span>
             {item.badge > 0 && (
               <span
                 className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none tabular-nums ${
-                  tab === item.id ? 'bg-[#050505] text-[#F5C542]' : 'bg-[#F5C542] text-[#050505]'
+                  tab === item.id ? 'bg-accent-fg text-accent' : 'bg-accent text-accent-fg'
                 }`}
               >
                 {item.badge > 99 ? '99+' : item.badge}
@@ -384,20 +386,20 @@ export function NotificationsPage({
 
       {/* Pending Friend Requests Interactive Section */}
       {(tab === 'all' || tab === 'requests') && incomingFriendRequests.length > 0 && (
-        <section className="bg-[#111114] border border-[#F5C542]/30 rounded-2xl overflow-hidden shadow-[0_10px_28px_rgba(0,0,0,0.45)]">
-          <div className="px-4 sm:px-5 py-3 border-b border-white/[0.08] flex items-center justify-between">
+        <section className="glass-card border-accent/30 rounded-2xl overflow-hidden">
+          <div className="px-4 sm:px-5 py-3 border-b border-hairline flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-[#F5C542]" />
-              <h2 className="font-display text-sm font-semibold text-[#FFFFFF]">
+              <UserPlus className="w-4 h-4 text-accent" />
+              <h2 className="font-display text-sm font-semibold text-ink">
                 Pending Friend Requests
               </h2>
             </div>
-            <span className="text-xs font-mono font-semibold text-[#F5C542] tabular-nums">
+            <span className="text-xs font-mono font-semibold text-accent tabular-nums">
               {incomingFriendRequests.length}
             </span>
           </div>
 
-          <div className="divide-y divide-white/[0.06]">
+          <div className="divide-y divide-hairline">
             {incomingFriendRequests.map((req) => {
               const busy = busyRequestIds.has(req.id);
               return (
@@ -412,10 +414,10 @@ export function NotificationsPage({
                   >
                     <Avatar src={req.senderAvatarUrl} name={req.senderName} size="md" />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[#FFFFFF] group-hover:text-[#F5C542] truncate transition-colors">
+                      <p className="text-sm font-semibold text-ink group-hover:text-accent truncate transition-colors">
                         {req.senderName}
                       </p>
-                      <p className="text-xs text-[#A5A5AD] truncate">
+                      <p className="text-xs text-ink-muted truncate">
                         @{req.senderUsername} · {formatRelativeTime(req.createdAt)}
                       </p>
                     </div>
@@ -435,7 +437,7 @@ export function NotificationsPage({
                       type="button"
                       disabled={busy}
                       onClick={() => handleFriendDecision(req, 'declined')}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-medium border border-white/15 bg-[#19191D] text-[#A5A5AD] hover:text-[#FFFFFF] inline-flex items-center gap-1.5 disabled:opacity-50"
+                      className="glass-btn px-3.5 py-1.5 rounded-xl text-xs font-medium text-ink-muted hover:text-ink inline-flex items-center gap-1.5 disabled:opacity-50"
                     >
                       <X className="w-3.5 h-3.5" />
                       <span>Decline</span>
@@ -450,17 +452,17 @@ export function NotificationsPage({
 
       {/* Error State */}
       {notificationsError && (
-        <div className="bg-[#111114] border border-rose-500/30 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="glass-card border-rose-500/30 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-            <p className="text-sm text-[#FFFFFF]">{notificationsError}</p>
+            <p className="text-sm text-ink">{notificationsError}</p>
           </div>
           <button
             type="button"
             onClick={refreshNotifications}
-            className="px-4 py-2 rounded-xl text-xs font-semibold border border-white/15 text-[#FFFFFF] hover:border-[#F5C542]/50 inline-flex items-center gap-1.5 self-start sm:self-auto"
+            className="glass-btn px-4 py-2 rounded-xl text-xs font-semibold text-ink inline-flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#F5C542]" />
+            <RefreshCw className="w-3.5 h-3.5 text-accent" />
             <span>Retry</span>
           </button>
         </div>
@@ -472,20 +474,20 @@ export function NotificationsPage({
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-20 rounded-2xl bg-[#111114] border border-white/[0.08] animate-pulse"
+              className="h-20 rounded-2xl glass-card animate-pulse"
             />
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
         (tab === 'all' || tab === 'requests') && incomingFriendRequests.length > 0 ? null : (
-          <div className="bg-[#111114] border border-[#F5C542]/20 rounded-2xl p-10 sm:p-12 text-center shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
-            <div className="w-12 h-12 rounded-2xl bg-[#F5C542]/12 border border-[#F5C542]/30 flex items-center justify-center mx-auto">
-              <Bell className="w-6 h-6 text-[#F5C542]" />
+          <div className="glass-card border-accent/20 rounded-2xl p-10 sm:p-12 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-accent/12 border border-accent/30 flex items-center justify-center mx-auto">
+              <Bell className="w-6 h-6 text-accent" />
             </div>
-            <h2 className="mt-4 font-display text-lg font-semibold text-[#FFFFFF]">
+            <h2 className="mt-4 font-display text-lg font-semibold text-ink">
               {tab === 'unread' ? 'No unread notifications' : 'All caught up'}
             </h2>
-            <p className="mt-1.5 text-sm text-[#A5A5AD] max-w-md mx-auto">
+            <p className="mt-1.5 text-sm text-ink-muted max-w-md mx-auto">
               {tab === 'requests'
                 ? 'Incoming friend requests and accepted connections will appear here.'
                 : 'Messages, likes, comments, replies, follows, friend requests, and @mentions will show up here in real time.'}
@@ -494,7 +496,7 @@ export function NotificationsPage({
         )
       ) : (
         <div className="space-y-2.5">
-          <div className="bg-[#111114] border border-white/[0.08] rounded-2xl divide-y divide-white/[0.06] overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.45)]">
+          <div className="glass-card rounded-2xl divide-y divide-hairline overflow-hidden">
             {filteredItems.map((item) => {
               const badge = getTypeBadge(item.type);
               const canonical = normalizeNotificationType(item.type);
@@ -505,35 +507,59 @@ export function NotificationsPage({
                   onClick={() => handleCardClick(item)}
                   className={`px-4 sm:px-5 py-4 flex items-start sm:items-center justify-between gap-3 transition-colors cursor-pointer ${
                     item.isRead
-                      ? 'hover:bg-white/[0.02]'
-                      : 'bg-[#F5C542]/[0.06] hover:bg-[#F5C542]/[0.1]'
+                      ? 'hover:bg-hover-tint/60'
+                      : 'bg-accent/[0.06] hover:bg-accent/[0.1]'
                   }`}
                 >
                   <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isAnnouncement) onOpenProfile(item.actorId);
-                      }}
-                      className="relative shrink-0"
-                    >
-                      <Avatar src={item.actorAvatarUrl} name={item.actorName} size="md" />
-                      <span
-                        className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${badge.bg}`}
-                        title={badge.label}
+                    {isAnnouncement ? (
+                      <div className="relative shrink-0">
+                        <img
+                          src={APP_NOTIFICATION_LOGO_URL}
+                          alt={APP_NOTIFICATION_SENDER_NAME}
+                          className="w-11 h-11 rounded-2xl object-cover border border-accent/45 bg-surface-2 shadow-sm shrink-0"
+                        />
+                        <span
+                          className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${badge.bg}`}
+                          title={badge.label}
+                        >
+                          {badge.icon}
+                        </span>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenProfile(item.actorId);
+                        }}
+                        className="relative shrink-0"
                       >
-                        {badge.icon}
-                      </span>
-                    </button>
+                        <Avatar src={item.actorAvatarUrl} name={item.actorName} size="md" />
+                        <span
+                          className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center shadow-md ${badge.bg}`}
+                          title={badge.label}
+                        >
+                          {badge.icon}
+                        </span>
+                      </button>
+                    )}
 
                     <div className="min-w-0 flex-1">
-                      {isAnnouncement && item.title && (
-                        <p className="text-xs font-bold uppercase tracking-wider text-[#F5C542] mb-0.5">
-                          {item.title}
+                      {isAnnouncement && (
+                        <p className="text-xs font-bold uppercase tracking-wider text-accent mb-0.5 flex flex-wrap items-center gap-1.5">
+                          <span>{APP_NOTIFICATION_SENDER_NAME}</span>
+                          {item.title && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="normal-case tracking-normal font-semibold text-ink">
+                                {item.title}
+                              </span>
+                            </>
+                          )}
                         </p>
                       )}
-                      <p className="text-sm text-[#FFFFFF] leading-snug break-words">
+                      <p className="text-sm text-ink leading-snug break-words">
                         {!isAnnouncement && (
                           <button
                             type="button"
@@ -541,16 +567,16 @@ export function NotificationsPage({
                               e.stopPropagation();
                               onOpenProfile(item.actorId);
                             }}
-                            className="font-semibold hover:text-[#F5C542] mr-1.5"
+                            className="font-semibold hover:text-accent mr-1.5"
                           >
                             {item.actorName}
                           </button>
                         )}
-                        <span className="text-[#A5A5AD]">
+                        <span className="text-ink-muted">
                           {isAnnouncement ? item.body || item.message : item.message}
                         </span>
                       </p>
-                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-[#A5A5AD]/80">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-ink-muted/80">
                         <span>{formatRelativeTime(item.createdAt)}</span>
                         <span aria-hidden="true">·</span>
                         <span>{formatExactDateTime(item.createdAt)}</span>
@@ -568,9 +594,9 @@ export function NotificationsPage({
                         onClick={() => void markNotificationRead(item.id)}
                         title="Mark as read"
                         aria-label="Mark as read"
-                        className="p-2 rounded-xl text-[#F5C542] hover:bg-[#F5C542]/15 transition-colors flex items-center gap-1"
+                        className="p-2 rounded-xl text-accent hover:bg-accent/15 transition-colors flex items-center gap-1"
                       >
-                        <span className="w-2 h-2 rounded-full bg-[#F5C542]" />
+                        <span className="w-2 h-2 rounded-full bg-accent" />
                         <Check className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -579,7 +605,7 @@ export function NotificationsPage({
                       onClick={() => void handleDeleteOne(item.id)}
                       title="Delete notification"
                       aria-label="Delete notification"
-                      className="p-2 rounded-xl text-[#A5A5AD] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      className="p-2 rounded-xl text-ink-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -595,7 +621,7 @@ export function NotificationsPage({
                 type="button"
                 disabled={loadingMoreNotifications}
                 onClick={loadMoreNotifications}
-                className="px-5 py-2.5 rounded-full border border-[#F5C542]/30 bg-[#111114] text-xs font-semibold text-[#F5C542] hover:bg-[#19191D] disabled:opacity-50"
+                className="glass-btn px-5 py-2.5 rounded-full border-accent/30 text-xs font-semibold text-accent disabled:opacity-50"
               >
                 {loadingMoreNotifications ? 'Loading...' : 'Load Earlier Notifications'}
               </button>
@@ -623,19 +649,21 @@ export function NotificationsPage({
           onClick={() => setSelectedAnnouncement(null)}
         >
           <div
-            className="w-full max-w-md bg-[#111114] border border-[#F5C542]/35 rounded-2xl p-6 space-y-4 shadow-2xl"
+            className="w-full max-w-md glass-modal hf-modal-enter rounded-2xl p-6 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#F8D162] to-[#D99B19] flex items-center justify-center">
-                  <Megaphone className="w-4 h-4 text-[#050505]" />
-                </span>
+              <div className="flex items-center gap-3">
+                <img
+                  src={APP_NOTIFICATION_LOGO_URL}
+                  alt={APP_NOTIFICATION_SENDER_NAME}
+                  className="w-10 h-10 rounded-xl object-cover border border-accent/45 bg-surface-2 shrink-0"
+                />
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#F5C542]">
-                    Official Announcement
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                    {APP_NOTIFICATION_SENDER_NAME} · Official Notification
                   </p>
-                  <p className="text-xs text-[#A5A5AD]">
+                  <p className="text-xs text-ink-muted">
                     {formatExactDateTime(selectedAnnouncement.createdAt)}
                   </p>
                 </div>
@@ -644,15 +672,15 @@ export function NotificationsPage({
                 type="button"
                 onClick={() => setSelectedAnnouncement(null)}
                 aria-label="Close announcement"
-                className="text-[#A5A5AD] hover:text-[#FFFFFF] p-1"
+                className="text-ink-muted hover:text-ink p-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <h3 className="font-display text-lg font-bold text-[#FFFFFF]">
+            <h3 className="font-display text-lg font-bold text-ink">
               {selectedAnnouncement.title || 'Hostel Friend Announcement'}
             </h3>
-            <p className="text-sm text-[#A5A5AD] leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-ink-muted leading-relaxed whitespace-pre-wrap">
               {selectedAnnouncement.body || selectedAnnouncement.message}
             </p>
             <button

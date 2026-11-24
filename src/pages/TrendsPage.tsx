@@ -13,9 +13,11 @@ import {
 } from 'recharts';
 import { ArrowUpRight, Clock, Flame, Hash, RefreshCw, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { Post } from '../types';
 import { fetchTrendsSample } from '../services/postService';
+import { isLegacyPollPost } from '../services/pollService';
 import { formatCount } from '../utils/formatters';
 import {
   computeCommunityTrends,
@@ -56,24 +58,24 @@ function HashtagTooltip({ active, payload }: CustomChartTooltipProps) {
   if (!item) return null;
 
   return (
-    <div className="bg-[#0A0A0C]/95 border border-white/15 rounded-xl px-3.5 py-2.5 shadow-xl text-xs">
-      <p className="font-display font-semibold text-[#D4AF37]">{item.label}</p>
-      <div className="mt-1.5 space-y-1 text-[#A1A1AA] font-mono tabular-nums">
+    <div className="bg-canvas-alt/95 border border-hairline-strong rounded-xl px-3.5 py-2.5 shadow-xl text-xs">
+      <p className="font-display font-semibold text-accent-strong">{item.label}</p>
+      <div className="mt-1.5 space-y-1 text-ink-muted font-mono tabular-nums">
         <div className="flex items-center justify-between gap-5">
           <span>Posts</span>
-          <span className="text-[#F8F9FA] font-semibold">{formatCount(item.posts || 0)}</span>
+          <span className="text-ink-2 font-semibold">{formatCount(item.posts || 0)}</span>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Likes</span>
-          <span className="text-[#F8F9FA]">{formatCount(item.likes || 0)}</span>
+          <span className="text-ink-2">{formatCount(item.likes || 0)}</span>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Comments</span>
-          <span className="text-[#F8F9FA]">{formatCount(item.comments || 0)}</span>
+          <span className="text-ink-2">{formatCount(item.comments || 0)}</span>
         </div>
-        <div className="flex items-center justify-between gap-5 pt-1 border-t border-white/[0.08]">
+        <div className="flex items-center justify-between gap-5 pt-1 border-t border-hairline">
           <span>Engagement</span>
-          <span className="text-[#E7C96F] font-semibold">{formatCount(item.engagement || 0)}</span>
+          <span className="text-accent-soft font-semibold">{formatCount(item.engagement || 0)}</span>
         </div>
       </div>
     </div>
@@ -94,16 +96,16 @@ function ActivityTooltip({ active, payload, label }: CustomChartTooltipProps) {
   if (!point) return null;
 
   return (
-    <div className="bg-[#0A0A0C]/95 border border-white/15 rounded-xl px-3.5 py-2.5 shadow-xl text-xs">
-      <p className="font-display font-semibold text-[#F8F9FA]">{point.label || label}</p>
-      <div className="mt-1.5 space-y-1 text-[#A1A1AA] font-mono tabular-nums">
+    <div className="bg-canvas-alt/95 border border-hairline-strong rounded-xl px-3.5 py-2.5 shadow-xl text-xs">
+      <p className="font-display font-semibold text-ink-2">{point.label || label}</p>
+      <div className="mt-1.5 space-y-1 text-ink-muted font-mono tabular-nums">
         <div className="flex items-center justify-between gap-5">
-          <span className="text-[#D4AF37]">Posts</span>
-          <span className="text-[#F8F9FA] font-semibold">{formatCount(point.posts || 0)}</span>
+          <span className="text-accent-strong">Posts</span>
+          <span className="text-ink-2 font-semibold">{formatCount(point.posts || 0)}</span>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Interactions</span>
-          <span className="text-[#F8F9FA] font-semibold">{formatCount(point.engagement || 0)}</span>
+          <span className="text-ink-2 font-semibold">{formatCount(point.engagement || 0)}</span>
         </div>
       </div>
     </div>
@@ -112,6 +114,7 @@ function ActivityTooltip({ active, payload, label }: CustomChartTooltipProps) {
 
 export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProps) {
   const { privateSettings } = useAuth();
+  const { activeTheme } = useTheme();
   const { showToast } = useToast();
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -153,7 +156,7 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
   }, [loadTrends]);
 
   const visiblePosts = useMemo(
-    () => posts.filter((p) => !blockedSet.has(p.authorId)),
+    () => posts.filter((p) => !blockedSet.has(p.authorId) && !isLegacyPollPost(p)),
     [posts, blockedSet]
   );
 
@@ -189,17 +192,17 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[#F8F9FA]">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink-2">
             Community Trends
           </h1>
-          <p className="text-xs text-[#A1A1AA] mt-0.5">
+          <p className="text-xs text-ink-muted mt-0.5">
             Popular hashtags and peak posting &amp; engagement hours across Hostel Friend
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Timeframe Selector */}
-          <div className="inline-flex items-center gap-1 p-1 bg-[#151519] rounded-xl border border-white/[0.08]">
+          <div className="inline-flex items-center gap-1 p-1 glass-card rounded-xl">
             {(
               [
                 { id: 'all', label: 'Recent 100' },
@@ -211,10 +214,10 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                 key={opt.id}
                 type="button"
                 onClick={() => setTimeframe(opt.id)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                className={`hf-press px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap shrink-0 ${
                   timeframe === opt.id
-                    ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                    : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                    ? 'bg-accent-strong text-accent-fg shadow-sm'
+                    : 'text-ink-muted hover:text-ink-2'
                 }`}
               >
                 {opt.label}
@@ -223,7 +226,7 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
           </div>
 
           {/* Media Type Filter */}
-          <div className="inline-flex items-center gap-1 p-1 bg-[#151519] rounded-xl border border-white/[0.08]">
+          <div className="inline-flex items-center gap-1 p-1 glass-card rounded-xl">
             {(
               [
                 { id: 'all', label: 'All' },
@@ -236,10 +239,10 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                 key={opt.id}
                 type="button"
                 onClick={() => setMediaFilter(opt.id)}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${
+                className={`hf-press px-2.5 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 ${
                   mediaFilter === opt.id
-                    ? 'bg-white/10 text-[#F8F9FA]'
-                    : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                    ? 'bg-hover-tint text-ink-2'
+                    : 'text-ink-muted hover:text-ink-2'
                 }`}
               >
                 {opt.label}
@@ -251,9 +254,9 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
             type="button"
             disabled={loading || refreshing}
             onClick={() => loadTrends(true)}
-            className="px-3.5 py-2 rounded-xl text-xs font-medium border border-white/10 bg-[#151519] text-[#F8F9FA] hover:border-[#D4AF37]/40 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50"
+            className="glass-btn px-3.5 py-2 rounded-xl text-xs font-medium text-ink-2 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#D4AF37] ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-accent-strong ${refreshing ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -261,19 +264,19 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.08] rounded-2xl overflow-hidden border border-white/[0.08]">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px glass-card rounded-2xl overflow-hidden">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 bg-[#151519] animate-pulse" />
+              <div key={i} className="h-24 bg-hover-tint/50 animate-pulse" />
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-6 h-88 rounded-2xl bg-[#151519] border border-white/[0.08] animate-pulse" />
-            <div className="lg:col-span-6 h-88 rounded-2xl bg-[#151519] border border-white/[0.08] animate-pulse" />
+            <div className="lg:col-span-6 h-88 rounded-2xl glass-card animate-pulse" />
+            <div className="lg:col-span-6 h-88 rounded-2xl glass-card animate-pulse" />
           </div>
         </div>
       ) : errorMsg ? (
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-10 text-center">
-          <p className="font-display text-base font-semibold text-[#F8F9FA]">{errorMsg}</p>
+        <div className="glass-card rounded-2xl p-10 text-center">
+          <p className="font-display text-base font-semibold text-ink-2">{errorMsg}</p>
           <button
             type="button"
             onClick={() => loadTrends(false)}
@@ -283,12 +286,12 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
           </button>
         </div>
       ) : summary.totalPosts === 0 ? (
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-12 text-center">
-          <TrendingUp className="w-8 h-8 text-[#D4AF37] mx-auto" />
-          <h2 className="mt-3 font-display text-lg font-semibold text-[#F8F9FA]">
+        <div className="glass-card rounded-2xl p-12 text-center">
+          <TrendingUp className="w-8 h-8 text-accent-strong mx-auto" />
+          <h2 className="mt-3 font-display text-lg font-semibold text-ink-2">
             No posts found for this filter
           </h2>
-          <p className="mt-1.5 text-xs text-[#A1A1AA] max-w-md mx-auto">
+          <p className="mt-1.5 text-xs text-ink-muted max-w-md mx-auto">
             Widen the timeframe or media filter to inspect hashtag momentum and hourly activity.
           </p>
           <div className="mt-5 flex items-center justify-center gap-3">
@@ -299,7 +302,7 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                   setTimeframe('all');
                   setMediaFilter('all');
                 }}
-                className="px-4 py-2 rounded-xl text-xs font-semibold border border-white/15 text-[#F8F9FA] hover:border-[#D4AF37]/40"
+                className="glass-btn px-4 py-2 rounded-xl text-xs font-semibold text-ink-2"
               >
                 Reset Filters
               </button>
@@ -318,58 +321,58 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
       ) : (
         <>
           {/* Single-Elevation KPI Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.08] rounded-2xl overflow-hidden border border-white/[0.08]">
-            <div className="bg-[#151519] p-5">
-              <p className="text-xs text-[#A1A1AA]">Posts Analyzed</p>
-              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-[#F8F9FA]">
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-hairline glass-card rounded-2xl overflow-hidden">
+            <div className="p-5">
+              <p className="text-xs text-ink-muted">Posts Analyzed</p>
+              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-ink-2">
                 {formatCount(summary.totalPosts)}
               </p>
-              <p className="mt-1 text-[11px] text-[#71717A] font-mono tabular-nums">
+              <p className="mt-1 text-[11px] text-ink-subtle font-mono tabular-nums">
                 {summary.uniqueHashtags} active hashtags
               </p>
             </div>
 
-            <div className="bg-[#151519] p-5">
-              <p className="text-xs text-[#A1A1AA]">Leading Hashtag</p>
+            <div className="p-5">
+              <p className="text-xs text-ink-muted">Leading Hashtag</p>
               {summary.topHashtags[0] ? (
                 <>
                   <button
                     type="button"
                     onClick={() => onSearchHashtag(summary.topHashtags[0].tag)}
-                    className="mt-1.5 font-display text-xl font-bold text-[#D4AF37] hover:text-[#E7C96F] truncate block max-w-full text-left"
+                    className="hf-press mt-1.5 font-display text-xl font-bold text-accent-strong hover:text-accent-soft truncate block max-w-full text-left"
                   >
                     {summary.topHashtags[0].label}
                   </button>
-                  <p className="mt-1 text-[11px] text-[#71717A] font-mono tabular-nums">
+                  <p className="mt-1 text-[11px] text-ink-subtle font-mono tabular-nums">
                     {summary.topHashtags[0].posts} posts · {summary.topHashtags[0].sharePct}% of feed
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="mt-1.5 font-display text-xl font-semibold text-[#71717A]">—</p>
-                  <p className="mt-1 text-[11px] text-[#71717A]">No hashtags tagged yet</p>
+                  <p className="mt-1.5 font-display text-xl font-semibold text-ink-subtle">—</p>
+                  <p className="mt-1 text-[11px] text-ink-subtle">No hashtags tagged yet</p>
                 </>
               )}
             </div>
 
-            <div className="bg-[#151519] p-5">
-              <p className="text-xs text-[#A1A1AA]">Peak Activity Hour</p>
-              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-[#F8F9FA]">
+            <div className="p-5">
+              <p className="text-xs text-ink-muted">Peak Activity Hour</p>
+              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-ink-2">
                 {summary.peakHour ? summary.peakHour.label : '—'}
               </p>
-              <p className="mt-1 text-[11px] text-[#71717A] font-mono tabular-nums truncate">
+              <p className="mt-1 text-[11px] text-ink-subtle font-mono tabular-nums truncate">
                 {summary.peakHour
                   ? `${summary.peakHour.posts} posts · ${formatCount(summary.peakHour.engagement)} interactions`
                   : localTimezoneLabel}
               </p>
             </div>
 
-            <div className="bg-[#151519] p-5">
-              <p className="text-xs text-[#A1A1AA]">Community Engagement</p>
-              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-[#F8F9FA]">
+            <div className="p-5">
+              <p className="text-xs text-ink-muted">Community Engagement</p>
+              <p className="mt-1.5 font-mono text-2xl font-semibold tabular-nums text-ink-2">
                 {formatCount(summary.totalEngagement)}
               </p>
-              <p className="mt-1 text-[11px] text-[#71717A] font-mono tabular-nums">
+              <p className="mt-1 text-[11px] text-ink-subtle font-mono tabular-nums">
                 {formatCount(summary.totalLikes)} likes · {formatCount(summary.totalComments)} comments
               </p>
             </div>
@@ -378,28 +381,28 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
           {/* Primary Recharts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Chart 1: Popular Hashtags */}
-            <section className="lg:col-span-6 bg-[#151519] border border-white/[0.08] rounded-2xl p-5 flex flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+            <section className="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-hairline">
                 <div className="flex items-center gap-2">
-                  <Hash className="w-4 h-4 text-[#D4AF37]" />
+                  <Hash className="w-4 h-4 text-accent-strong" />
                   <div>
-                    <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+                    <h2 className="font-display text-base font-semibold text-ink-2">
                       Most Popular Hashtags
                     </h2>
-                    <p className="text-[11px] text-[#71717A]">
+                    <p className="text-[11px] text-ink-subtle">
                       Click any bar to explore posts with that tag
                     </p>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-1 p-1 bg-[#0A0A0C] rounded-lg border border-white/[0.06]">
+                <div className="inline-flex items-center gap-1 p-1 bg-canvas-alt rounded-lg border border-hairline">
                   <button
                     type="button"
                     onClick={() => setHashtagMetric('posts')}
                     className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                       hashtagMetric === 'posts'
-                        ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                        : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                        ? 'bg-accent-strong text-accent-fg'
+                        : 'text-ink-muted hover:text-ink-2'
                     }`}
                   >
                     Posts
@@ -409,8 +412,8 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                     onClick={() => setHashtagMetric('engagement')}
                     className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                       hashtagMetric === 'engagement'
-                        ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                        : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                        ? 'bg-accent-strong text-accent-fg'
+                        : 'text-ink-muted hover:text-ink-2'
                     }`}
                   >
                     Engagement
@@ -420,8 +423,8 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
 
               {rankedHashtags.length === 0 ? (
                 <div className="flex-1 min-h-[280px] flex flex-col items-center justify-center text-center p-6">
-                  <p className="text-sm font-medium text-[#F8F9FA]">No hashtags in this sample</p>
-                  <p className="mt-1 text-xs text-[#71717A] max-w-xs">
+                  <p className="text-sm font-medium text-ink-2">No hashtags in this sample</p>
+                  <p className="mt-1 text-xs text-ink-subtle max-w-xs">
                     Add #hashtags to captions when sharing posts to surface trending topics here.
                   </p>
                 </div>
@@ -434,29 +437,33 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                       margin={{ top: 4, right: 20, left: 4, bottom: 4 }}
                     >
                       <CartesianGrid
-                        stroke="rgba(255,255,255,0.06)"
+                        stroke={activeTheme.chartGridColor}
                         strokeDasharray="3 3"
                         horizontal={false}
                       />
                       <XAxis
                         type="number"
                         allowDecimals={false}
-                        stroke="#71717A"
-                        tick={{ fill: '#71717A', fontSize: 11 }}
-                        axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.chartAxisColor, fontSize: 11 }}
+                        axisLine={{ stroke: activeTheme.chartGridColor }}
                         tickLine={false}
                       />
                       <YAxis
                         type="category"
                         dataKey="label"
                         width={116}
-                        stroke="#A1A1AA"
-                        tick={{ fill: '#F8F9FA', fontSize: 12 }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.swatches.text, fontSize: 12 }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <Tooltip
-                        cursor={{ fill: 'rgba(212, 175, 55, 0.08)' }}
+                        cursor={{
+                          fill: activeTheme.isLight
+                            ? 'rgba(180, 123, 0, 0.08)'
+                            : 'rgba(255, 255, 255, 0.06)',
+                        }}
                         content={<HashtagTooltip />}
                       />
                       <Bar
@@ -474,10 +481,10 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                             key={entry.tag}
                             fill={
                               idx === 0
-                                ? '#E7C96F'
+                                ? activeTheme.accentSoftHex
                                 : idx <= 2
-                                ? '#D4AF37'
-                                : 'rgba(212, 175, 55, 0.62)'
+                                ? activeTheme.accentHex
+                                : `${activeTheme.accentHex}9E`
                             }
                           />
                         ))}
@@ -489,28 +496,28 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
             </section>
 
             {/* Chart 2: Peak Activity Times */}
-            <section className="lg:col-span-6 bg-[#151519] border border-white/[0.08] rounded-2xl p-5 flex flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/[0.06]">
+            <section className="lg:col-span-6 glass-card rounded-2xl p-5 flex flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-hairline">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#D4AF37]" />
+                  <Clock className="w-4 h-4 text-accent-strong" />
                   <div>
-                    <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+                    <h2 className="font-display text-base font-semibold text-ink-2">
                       Peak Activity Times
                     </h2>
-                    <p className="text-[11px] text-[#71717A]">
+                    <p className="text-[11px] text-ink-subtle">
                       Posts and engagement rhythm ({localTimezoneLabel})
                     </p>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-1 p-1 bg-[#0A0A0C] rounded-lg border border-white/[0.06]">
+                <div className="inline-flex items-center gap-1 p-1 bg-canvas-alt rounded-lg border border-hairline">
                   <button
                     type="button"
                     onClick={() => setActivityView('hourly')}
                     className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                       activityView === 'hourly'
-                        ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                        : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                        ? 'bg-accent-strong text-accent-fg'
+                        : 'text-ink-muted hover:text-ink-2'
                     }`}
                   >
                     24-Hour Cycle
@@ -520,8 +527,8 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                     onClick={() => setActivityView('weekday')}
                     className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                       activityView === 'weekday'
-                        ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                        : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                        ? 'bg-accent-strong text-accent-fg'
+                        : 'text-ink-muted hover:text-ink-2'
                     }`}
                   >
                     Day of Week
@@ -538,31 +545,31 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                     >
                       <defs>
                         <linearGradient id="goldPostsGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.38} />
-                          <stop offset="95%" stopColor="#D4AF37" stopOpacity={0.02} />
+                          <stop offset="5%" stopColor={activeTheme.accentHex} stopOpacity={0.38} />
+                          <stop offset="95%" stopColor={activeTheme.accentHex} stopOpacity={0.02} />
                         </linearGradient>
                         <linearGradient id="pearlEngagementGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#F8F9FA" stopOpacity={0.14} />
-                          <stop offset="95%" stopColor="#F8F9FA" stopOpacity={0.0} />
+                          <stop offset="5%" stopColor={activeTheme.swatches.text} stopOpacity={0.16} />
+                          <stop offset="95%" stopColor={activeTheme.swatches.text} stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid
-                        stroke="rgba(255,255,255,0.06)"
+                        stroke={activeTheme.chartGridColor}
                         strokeDasharray="3 3"
                         vertical={false}
                       />
                       <XAxis
                         dataKey="shortLabel"
                         interval={2}
-                        stroke="#71717A"
-                        tick={{ fill: '#A1A1AA', fontSize: 11 }}
-                        axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.chartAxisColor, fontSize: 11 }}
+                        axisLine={{ stroke: activeTheme.chartGridColor }}
                         tickLine={false}
                       />
                       <YAxis
                         allowDecimals={false}
-                        stroke="#71717A"
-                        tick={{ fill: '#71717A', fontSize: 11 }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.chartAxisColor, fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                       />
@@ -571,8 +578,8 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                         type="monotone"
                         dataKey="engagement"
                         name="Interactions"
-                        stroke="#F8F9FA"
-                        strokeOpacity={0.55}
+                        stroke={activeTheme.swatches.muted}
+                        strokeOpacity={0.75}
                         strokeWidth={1.5}
                         fill="url(#pearlEngagementGradient)"
                       />
@@ -580,10 +587,15 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                         type="monotone"
                         dataKey="posts"
                         name="Posts"
-                        stroke="#D4AF37"
+                        stroke={activeTheme.accentHex}
                         strokeWidth={2.25}
                         fill="url(#goldPostsGradient)"
-                        activeDot={{ r: 5, fill: '#E7C96F', stroke: '#0A0A0C', strokeWidth: 2 }}
+                        activeDot={{
+                          r: 5,
+                          fill: activeTheme.accentSoftHex,
+                          stroke: activeTheme.swatches.canvas,
+                          strokeWidth: 2,
+                        }}
                       />
                     </AreaChart>
                   ) : (
@@ -592,33 +604,47 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                       margin={{ top: 8, right: 12, left: -16, bottom: 4 }}
                     >
                       <CartesianGrid
-                        stroke="rgba(255,255,255,0.06)"
+                        stroke={activeTheme.chartGridColor}
                         strokeDasharray="3 3"
                         vertical={false}
                       />
                       <XAxis
                         dataKey="label"
-                        stroke="#71717A"
-                        tick={{ fill: '#F8F9FA', fontSize: 12 }}
-                        axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.swatches.text, fontSize: 12 }}
+                        axisLine={{ stroke: activeTheme.chartGridColor }}
                         tickLine={false}
                       />
                       <YAxis
                         allowDecimals={false}
-                        stroke="#71717A"
-                        tick={{ fill: '#71717A', fontSize: 11 }}
+                        stroke={activeTheme.chartAxisColor}
+                        tick={{ fill: activeTheme.chartAxisColor, fontSize: 11 }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <Tooltip
-                        cursor={{ fill: 'rgba(212, 175, 55, 0.08)' }}
+                        cursor={{
+                          fill: activeTheme.isLight
+                            ? 'rgba(180, 123, 0, 0.08)'
+                            : 'rgba(255, 255, 255, 0.06)',
+                        }}
                         content={<ActivityTooltip />}
                       />
-                      <Bar dataKey="posts" name="Posts" fill="#D4AF37" radius={[6, 6, 0, 0]} barSize={24} />
+                      <Bar
+                        dataKey="posts"
+                        name="Posts"
+                        fill={activeTheme.accentHex}
+                        radius={[6, 6, 0, 0]}
+                        barSize={24}
+                      />
                       <Bar
                         dataKey="engagement"
                         name="Interactions"
-                        fill="rgba(248, 249, 250, 0.25)"
+                        fill={
+                          activeTheme.isLight
+                            ? 'rgba(82, 88, 102, 0.28)'
+                            : 'rgba(248, 249, 250, 0.25)'
+                        }
                         radius={[6, 6, 0, 0]}
                         barSize={24}
                       />
@@ -627,19 +653,19 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                 </ResponsiveContainer>
               </div>
 
-              <div className="mt-3 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#A1A1AA]">
+              <div className="mt-3 pt-3 border-t border-hairline flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-muted">
                 <div className="flex items-center gap-4">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-[#D4AF37] inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-accent-strong inline-block" />
                     Posts Published
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-white/50 inline-block" />
+                    <span className="w-2.5 h-2.5 rounded-sm bg-ink-muted/50 inline-block" />
                     Likes &amp; Comments
                   </span>
                 </div>
                 {summary.peakDay && (
-                  <span className="font-mono tabular-nums text-[#D4AF37]">
+                  <span className="font-mono tabular-nums text-accent-strong">
                     Most active day: {summary.peakDay.label} ({summary.peakDay.posts} posts)
                   </span>
                 )}
@@ -650,28 +676,28 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
           {/* Detailed Breakdowns */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             {/* Trending Hashtag Leaderboard Table */}
-            <section className="lg:col-span-7 bg-[#151519] border border-white/[0.08] rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between gap-3">
+            <section className="lg:col-span-7 glass-card rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-hairline flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-[#D4AF37]" />
-                  <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+                  <Flame className="w-4 h-4 text-accent-strong" />
+                  <h2 className="font-display text-base font-semibold text-ink-2">
                     Hashtag Breakdown
                   </h2>
                 </div>
-                <span className="text-[11px] font-mono tabular-nums text-[#71717A]">
+                <span className="text-[11px] font-mono tabular-nums text-ink-subtle">
                   Top {summary.topHashtags.length} tags
                 </span>
               </div>
 
               {summary.topHashtags.length === 0 ? (
-                <p className="p-6 text-xs text-[#71717A] text-center">
+                <p className="p-6 text-xs text-ink-subtle text-center">
                   No hashtags recorded for the selected filters.
                 </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-white/[0.06] text-[11px] font-medium text-[#71717A]">
+                      <tr className="border-b border-hairline text-[11px] font-medium text-ink-subtle">
                         <th className="py-3 pl-5 pr-2 w-10">#</th>
                         <th className="py-3 px-3">Hashtag</th>
                         <th className="py-3 px-3 text-right">Posts</th>
@@ -685,25 +711,25 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                         <tr
                           key={item.tag}
                           onClick={() => onSearchHashtag(item.tag)}
-                          className="hover:bg-white/[0.03] cursor-pointer transition-colors group"
+                          className="hover:bg-hover-tint cursor-pointer transition-colors group"
                         >
-                          <td className="py-2.5 pl-5 pr-2 font-mono tabular-nums text-[#71717A]">
+                          <td className="py-2.5 pl-5 pr-2 font-mono tabular-nums text-ink-subtle">
                             {idx + 1}
                           </td>
-                          <td className="py-2.5 px-3 font-medium text-[#F8F9FA] group-hover:text-[#D4AF37] flex items-center gap-1.5">
+                          <td className="py-2.5 px-3 font-medium text-ink-2 group-hover:text-accent-strong flex items-center gap-1.5">
                             <span>{item.label}</span>
                             <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#F8F9FA]">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-ink-2">
                             {formatCount(item.posts)}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#A1A1AA]">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-ink-muted">
                             {formatCount(item.likes)}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#A1A1AA]">
+                          <td className="py-2.5 px-3 text-right font-mono tabular-nums text-ink-muted">
                             {formatCount(item.comments)}
                           </td>
-                          <td className="py-2.5 pl-3 pr-5 text-right font-mono tabular-nums text-[#D4AF37]">
+                          <td className="py-2.5 pl-3 pr-5 text-right font-mono tabular-nums text-accent-strong">
                             {item.sharePct}%
                           </td>
                         </tr>
@@ -715,12 +741,12 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
             </section>
 
             {/* Time-of-Day Windows */}
-            <section className="lg:col-span-5 bg-[#151519] border border-white/[0.08] rounded-2xl p-5 flex flex-col justify-between">
+            <section className="lg:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
               <div>
-                <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+                <h2 className="font-display text-base font-semibold text-ink-2">
                   Hostel Activity Windows
                 </h2>
-                <p className="text-[11px] text-[#71717A] mt-0.5">
+                <p className="text-[11px] text-ink-subtle mt-0.5">
                   Share of posts published across each 6-hour window
                 </p>
 
@@ -729,17 +755,17 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                     <div key={period.id} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-3 text-xs">
                         <div className="min-w-0">
-                          <span className="font-medium text-[#F8F9FA]">{period.label}</span>
-                          <span className="text-[#71717A] ml-2">{period.range}</span>
+                          <span className="font-medium text-ink-2">{period.label}</span>
+                          <span className="text-ink-subtle ml-2">{period.range}</span>
                         </div>
-                        <span className="font-mono tabular-nums text-[#A1A1AA] shrink-0">
+                        <span className="font-mono tabular-nums text-ink-muted shrink-0">
                           {period.posts} posts ·{' '}
-                          <span className="text-[#D4AF37] font-semibold">{period.pct}%</span>
+                          <span className="text-accent-strong font-semibold">{period.pct}%</span>
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-[#0A0A0C] overflow-hidden border border-white/[0.05]">
+                      <div className="h-2 rounded-full bg-canvas-alt overflow-hidden border border-hairline">
                         <div
-                          className="h-full rounded-full bg-[#D4AF37] transition-all duration-300"
+                          className="h-full rounded-full bg-accent-strong transition-all duration-300"
                           style={{ width: `${period.pct}%` }}
                         />
                       </div>
@@ -748,9 +774,9 @@ export function TrendsPage({ onSearchHashtag, onNavigateCreate }: TrendsPageProp
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs text-[#A1A1AA]">
+              <div className="mt-6 pt-4 border-t border-hairline flex items-center justify-between text-xs text-ink-muted">
                 <span>Sampled from latest hostel posts</span>
-                <span className="font-mono tabular-nums text-[#F8F9FA]">
+                <span className="font-mono tabular-nums text-ink-2">
                   {summary.totalPosts} / 100
                 </span>
               </div>

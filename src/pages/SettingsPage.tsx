@@ -27,6 +27,7 @@ import { AvatarUploadCard } from '../components/AvatarUploadCard';
 import { CoverUploadCard } from '../components/CoverUploadCard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PWAInstallButton } from '../components/PWAInstallButton';
+import { ThemeCustomizationCard } from '../components/ThemeCustomizationCard';
 import { sanitizeUsername } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
 import {
@@ -289,11 +290,14 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-[#F8F9FA]">Settings</h1>
-        <p className="text-xs text-[#A1A1AA] mt-0.5">
-          Manage your account, security, privacy, notifications, and blocked members
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink-2">Settings</h1>
+        <p className="text-xs text-ink-muted mt-0.5">
+          Customize your theme, manage your account, security, privacy, notifications, and blocked members
         </p>
       </div>
+
+      {/* Theme Customization */}
+      <ThemeCustomizationCard />
 
       {/* Upload Your Avatar & Cover Photo */}
       <AvatarUploadCard />
@@ -302,15 +306,15 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       {/* Edit Account */}
       <form
         onSubmit={handleSaveAccount}
-        className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-4"
+        className="glass-card rounded-2xl p-6 space-y-4"
       >
-        <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-          <User className="w-4 h-4 text-[#D4AF37]" />
-          <h2 className="font-display text-base font-semibold text-[#F8F9FA]">Account Details</h2>
+        <div className="flex items-center gap-2.5 pb-2 border-b border-hairline">
+          <User className="w-4 h-4 text-accent-strong" />
+          <h2 className="font-display text-base font-semibold text-ink-2">Account Details</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Full Name
             <input
               type="text"
@@ -318,10 +322,10 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
               maxLength={64}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             />
           </label>
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Username
             <input
               type="text"
@@ -330,35 +334,35 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
               maxLength={24}
               value={username}
               onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             />
           </label>
         </div>
 
-        <label className="block text-xs font-medium text-[#A1A1AA]">
+        <label className="block text-xs font-medium text-ink-muted">
           Hostel or Institution
           <input
             type="text"
             maxLength={80}
             value={hostel}
             onChange={(e) => setHostel(e.target.value)}
-            className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+            className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
           />
         </label>
 
-        <label className="block text-xs font-medium text-[#A1A1AA]">
+        <label className="block text-xs font-medium text-ink-muted">
           Bio
           <textarea
             rows={2}
             maxLength={240}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37] resize-none"
+            className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong resize-none"
           />
         </label>
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-xs text-[#71717A]">
+          <span className="text-xs text-ink-subtle">
             Account contact: {privateSettings?.email || firebaseUser?.email || 'Verified Member'}
           </span>
           <button
@@ -374,32 +378,32 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       {/* Change Password */}
       <form
         onSubmit={handleChangePassword}
-        className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-4"
+        className="glass-card rounded-2xl p-6 space-y-4"
       >
-        <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-          <Lock className="w-4 h-4 text-[#D4AF37]" />
-          <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+        <div className="flex items-center gap-2.5 pb-2 border-b border-hairline">
+          <Lock className="w-4 h-4 text-accent-strong" />
+          <h2 className="font-display text-base font-semibold text-ink-2">
             Password & Security
           </h2>
         </div>
 
-        <div className="rounded-xl bg-[#0A0A0C] border border-white/[0.08] p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="rounded-xl bg-canvas-alt border border-hairline p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold text-[#F8F9FA]">Google Account Connection</p>
-            <p className="text-xs text-[#A1A1AA] mt-0.5">
+            <p className="text-xs font-semibold text-ink-2">Google Account Connection</p>
+            <p className="text-xs text-ink-muted mt-0.5">
               {hasGoogleProvider
                 ? `Connected to ${firebaseUser?.email || 'your Google account'} for one-tap sign-in.`
                 : 'Connect your Google account for effortless one-tap sign-in.'}
             </p>
           </div>
           {hasGoogleProvider ? (
-            <span className="text-xs font-medium text-[#D4AF37] shrink-0">Connected</span>
+            <span className="text-xs font-medium text-accent-strong shrink-0">Connected</span>
           ) : (
             <button
               type="button"
               disabled={linkingGoogle}
               onClick={handleLinkGoogle}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-[#D4AF37]/40 text-[#F8F9FA] hover:border-[#D4AF37] hover:bg-white/[0.04] disabled:opacity-50 shrink-0"
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-accent-strong/40 text-ink-2 hover:border-accent-strong hover:bg-hover-tint disabled:opacity-50 shrink-0"
             >
               {linkingGoogle ? 'Connecting...' : 'Connect Google Account'}
             </button>
@@ -407,23 +411,23 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
         </div>
 
         {!hasPasswordProvider ? (
-          <p className="text-xs text-[#A1A1AA] leading-relaxed">
+          <p className="text-xs text-ink-muted leading-relaxed">
             You sign in using Google Authentication. Your password is managed securely through your
             Google Account.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="block text-xs font-medium text-[#A1A1AA]">
+            <label className="block text-xs font-medium text-ink-muted">
               Current Password
               <input
                 type="password"
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+                className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
               />
             </label>
-            <label className="block text-xs font-medium text-[#A1A1AA]">
+            <label className="block text-xs font-medium text-ink-muted">
               New Password
               <input
                 type="password"
@@ -431,7 +435,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                 minLength={6}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+                className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
               />
             </label>
           </div>
@@ -442,7 +446,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
             <button
               type="submit"
               disabled={changingPassword}
-              className="px-5 py-2 rounded-xl text-xs font-semibold border border-white/15 text-[#F8F9FA] hover:border-[#D4AF37]/40 disabled:opacity-50"
+              className="px-5 py-2 rounded-xl text-xs font-semibold border border-hairline-strong text-ink-2 hover:border-accent-strong/40 disabled:opacity-50"
             >
               {changingPassword ? 'Updating...' : 'Update Password'}
             </button>
@@ -451,29 +455,29 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       </form>
 
       {/* Privacy & Notification Preferences */}
-      <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-5">
-        <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-          <Bell className="w-4 h-4 text-[#D4AF37]" />
-          <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+      <div className="glass-card rounded-2xl p-6 space-y-5">
+        <div className="flex items-center gap-2.5 pb-2 border-b border-hairline">
+          <Bell className="w-4 h-4 text-accent-strong" />
+          <h2 className="font-display text-base font-semibold text-ink-2">
             Privacy & Notifications
           </h2>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-[#F8F9FA]">Profile Discovery Mode</p>
-            <p className="text-xs text-[#A1A1AA]">
+            <p className="text-sm font-medium text-ink-2">Profile Discovery Mode</p>
+            <p className="text-xs text-ink-muted">
               Choose who can interact directly with your account
             </p>
           </div>
-          <div className="inline-flex p-1 bg-[#0A0A0C] rounded-xl border border-white/10 self-start">
+          <div className="inline-flex p-1 bg-canvas-alt rounded-xl border border-hairline self-start">
             <button
               type="button"
               onClick={() => handlePrivacyChange('public')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
                 privateSettings?.privacyMode !== 'followers'
-                  ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                  : 'text-[#A1A1AA]'
+                  ? 'bg-accent-strong text-accent-fg'
+                  : 'text-ink-muted'
               }`}
             >
               Public Campus
@@ -483,8 +487,8 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
               onClick={() => handlePrivacyChange('followers')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
                 privateSettings?.privacyMode === 'followers'
-                  ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                  : 'text-[#A1A1AA]'
+                  ? 'bg-accent-strong text-accent-fg'
+                  : 'text-ink-muted'
               }`}
             >
               Followers Only
@@ -492,15 +496,15 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
           </div>
         </div>
 
-        <div className="space-y-3 pt-2 border-t border-white/[0.06]">
-          <div className="rounded-xl bg-[#0A0A0C] border border-[#F5C542]/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-3 pt-2 border-t border-hairline">
+          <div className="rounded-xl bg-canvas-alt border border-accent/20 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start gap-3">
-              <BellRing className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+              <BellRing className="w-4 h-4 text-accent-strong shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-[#F8F9FA]">
+                <p className="text-sm font-semibold text-ink-2">
                   Push Notifications (Web & Android PWA)
                 </p>
-                <p className="text-xs text-[#A1A1AA] mt-0.5 leading-relaxed">
+                <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">
                   {pushSupport === 'ios-needs-install'
                     ? 'On iPhone/iPad Safari, add Hostel Friend to your Home Screen first (iOS 16.4+) to enable push alerts.'
                     : pushSupport === 'missing-vapid'
@@ -516,7 +520,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
               </div>
             </div>
             <label className="inline-flex items-center gap-2 shrink-0 cursor-pointer self-end sm:self-center">
-              <span className="text-xs text-[#A1A1AA]">
+              <span className="text-xs text-ink-muted">
                 {pushBusy
                   ? 'Updating...'
                   : notificationPreferences?.pushEnabled &&
@@ -534,7 +538,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                     pushSupport === 'supported'
                 )}
                 onChange={(e) => void handleTogglePushNotifications(e.target.checked)}
-                className="w-4 h-4 accent-[#D4AF37] cursor-pointer"
+                className="w-4 h-4 accent-accent-strong cursor-pointer"
               />
             </label>
           </div>
@@ -557,23 +561,23 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                 key={item.key}
                 className="flex items-center justify-between gap-4 cursor-pointer py-1"
               >
-                <span className="text-sm text-[#F8F9FA]">{item.label}</span>
+                <span className="text-sm text-ink-2">{item.label}</span>
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={(e) => void handleTogglePreference(item.key, e.target.checked)}
-                  className="w-4 h-4 accent-[#D4AF37]"
+                  className="w-4 h-4 accent-accent-strong"
                 />
               </label>
             );
           })}
 
-          <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between gap-4">
+          <div className="pt-3 border-t border-hairline flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <Volume2 className="w-4 h-4 text-[#D4AF37] shrink-0" />
+              <Volume2 className="w-4 h-4 text-accent-strong shrink-0" />
               <div>
-                <p className="text-sm text-[#F8F9FA]">Sound Effects (VFX)</p>
-                <p className="text-xs text-[#A1A1AA]">
+                <p className="text-sm text-ink-2">Sound Effects (VFX)</p>
+                <p className="text-xs text-ink-muted">
                   Subtle chimes for notifications, messages, uploads, likes, and comments
                 </p>
               </div>
@@ -585,7 +589,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                   if (!soundEnabled) setSoundVfxEnabled(true);
                   playSound('notification');
                 }}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-white/10 text-[#A1A1AA] hover:text-[#F8F9FA] hover:border-[#D4AF37]/40 transition-colors"
+                className="px-2.5 py-1 rounded-lg text-xs font-medium border border-hairline text-ink-muted hover:text-ink-2 hover:border-accent-strong/40 transition-colors"
               >
                 Test
               </button>
@@ -594,15 +598,15 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                 aria-label="Enable Sound Effects (VFX)"
                 checked={soundEnabled}
                 onChange={(e) => setSoundVfxEnabled(e.target.checked)}
-                className="w-4 h-4 accent-[#D4AF37] cursor-pointer"
+                className="w-4 h-4 accent-accent-strong cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-3 border-t border-hairline flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-[#F8F9FA]">Mobile & Desktop App</p>
-              <p className="text-xs text-[#A1A1AA]">
+              <p className="text-sm text-ink-2">Mobile & Desktop App</p>
+              <p className="text-xs text-ink-muted">
                 Install Hostel Friend on your home screen for fast app launch
               </p>
             </div>
@@ -612,14 +616,14 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       </div>
 
       {/* Blocked Users */}
-      <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-          <ShieldAlert className="w-4 h-4 text-[#D4AF37]" />
-          <h2 className="font-display text-base font-semibold text-[#F8F9FA]">Blocked Members</h2>
+      <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="flex items-center gap-2.5 pb-2 border-b border-hairline">
+          <ShieldAlert className="w-4 h-4 text-accent-strong" />
+          <h2 className="font-display text-base font-semibold text-ink-2">Blocked Members</h2>
         </div>
 
         {blockedUsers.length === 0 ? (
-          <p className="text-xs text-[#71717A]">You have not blocked any members.</p>
+          <p className="text-xs text-ink-subtle">You have not blocked any members.</p>
         ) : (
           <div className="space-y-3">
             {blockedUsers.map((u) => (
@@ -627,14 +631,14 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                 <div className="flex items-center gap-3">
                   <Avatar src={u.avatarUrl} name={u.fullName} size="sm" />
                   <div>
-                    <p className="text-sm font-medium text-[#F8F9FA]">{u.fullName}</p>
-                    <p className="text-xs text-[#A1A1AA]">@{u.username}</p>
+                    <p className="text-sm font-medium text-ink-2">{u.fullName}</p>
+                    <p className="text-xs text-ink-muted">@{u.username}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleUnblock(u.uid)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 text-[#F8F9FA] hover:border-[#D4AF37]/40"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium border border-hairline text-ink-2 hover:border-accent-strong/40"
                 >
                   Unblock
                 </button>
@@ -645,11 +649,11 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       </div>
 
       {/* Session & Account Deletion */}
-      <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="glass-card rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
           type="button"
           onClick={handleLogout}
-          className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-white/15 text-[#F8F9FA] hover:bg-white/[0.04] inline-flex items-center justify-center gap-2"
+          className="px-4 py-2.5 rounded-xl text-xs font-semibold border border-hairline-strong text-ink-2 hover:bg-hover-tint inline-flex items-center justify-center gap-2"
         >
           <LogOut className="w-4 h-4" />
           <span>Log Out</span>

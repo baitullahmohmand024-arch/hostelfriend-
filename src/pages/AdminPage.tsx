@@ -11,7 +11,11 @@ import {
   savePlatformSettings,
   updateReportStatus,
 } from '../services/socialService';
-import { sendAdminAnnouncement } from '../services/notificationService';
+import {
+  APP_NOTIFICATION_LOGO_URL,
+  APP_NOTIFICATION_SENDER_NAME,
+  sendAdminAnnouncement,
+} from '../services/notificationService';
 import { Avatar } from '../components/Avatar';
 import { formatRelativeTime } from '../utils/formatters';
 
@@ -70,10 +74,10 @@ export function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-lg mx-auto bg-[#151519] border border-white/[0.08] rounded-2xl p-10 text-center">
+      <div className="max-w-lg mx-auto bg-surface-2 border border-hairline rounded-2xl p-10 text-center">
         <Shield className="w-8 h-8 text-rose-400 mx-auto" />
-        <h1 className="mt-3 font-display text-xl font-bold text-[#F8F9FA]">Access Restricted</h1>
-        <p className="mt-2 text-sm text-[#A1A1AA]">
+        <h1 className="mt-3 font-display text-xl font-bold text-ink-2">Access Restricted</h1>
+        <p className="mt-2 text-sm text-ink-muted">
           Administrator privileges are required to view community moderation tools.
         </p>
       </div>
@@ -190,10 +194,10 @@ export function AdminPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-[#F8F9FA]">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink-2">
             Administration & Safety
           </h1>
-          <p className="text-xs text-[#A1A1AA] mt-0.5">
+          <p className="text-xs text-ink-muted mt-0.5">
             Moderate reports, manage member access, and configure platform controls
           </p>
         </div>
@@ -201,28 +205,28 @@ export function AdminPage() {
 
       {/* Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-5">
-          <p className="text-xs text-[#A1A1AA]">Open Reports</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-[#D4AF37] tabular-nums">
+        <div className="bg-surface-2 border border-hairline rounded-2xl p-5">
+          <p className="text-xs text-ink-muted">Open Reports</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-accent-strong tabular-nums">
             {openReportsCount}
           </p>
         </div>
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-5">
-          <p className="text-xs text-[#A1A1AA]">Active Members Sampled</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-[#F8F9FA] tabular-nums">
+        <div className="bg-surface-2 border border-hairline rounded-2xl p-5">
+          <p className="text-xs text-ink-muted">Active Members Sampled</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-ink-2 tabular-nums">
             {members.length}
           </p>
         </div>
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-5">
-          <p className="text-xs text-[#A1A1AA]">Recent Posts Indexed</p>
-          <p className="mt-1 font-mono text-2xl font-bold text-[#F8F9FA] tabular-nums">
+        <div className="bg-surface-2 border border-hairline rounded-2xl p-5">
+          <p className="text-xs text-ink-muted">Recent Posts Indexed</p>
+          <p className="mt-1 font-mono text-2xl font-bold text-ink-2 tabular-nums">
             {postsSampled}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-[#151519] rounded-xl border border-white/[0.08]">
+      <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-surface-2 rounded-xl border border-hairline">
         {(
           [
             { id: 'reports', label: 'Reported Content' },
@@ -237,8 +241,8 @@ export function AdminPage() {
             onClick={() => setTab(item.id)}
             className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
               tab === item.id
-                ? 'bg-[#D4AF37] text-[#0A0A0C]'
-                : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                ? 'bg-accent-strong text-accent-fg'
+                : 'text-ink-muted hover:text-ink-2'
             }`}
           >
             {item.label}
@@ -247,31 +251,31 @@ export function AdminPage() {
       </div>
 
       {loading ? (
-        <div className="h-48 rounded-2xl bg-[#151519] border border-white/[0.08] animate-pulse" />
+        <div className="h-48 rounded-2xl bg-surface-2 border border-hairline animate-pulse" />
       ) : tab === 'reports' ? (
         <div className="space-y-3">
           {reports.length === 0 ? (
-            <div className="bg-[#151519] border border-white/[0.08] rounded-2xl p-10 text-center">
-              <p className="text-sm text-[#A1A1AA]">No moderation reports have been filed.</p>
+            <div className="bg-surface-2 border border-hairline rounded-2xl p-10 text-center">
+              <p className="text-sm text-ink-muted">No moderation reports have been filed.</p>
             </div>
           ) : (
             reports.map((report) => (
               <div
                 key={report.id}
-                className="bg-[#151519] border border-white/[0.08] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="bg-surface-2 border border-hairline rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-[#F8F9FA]">
+                  <p className="text-sm font-semibold text-ink-2">
                     {report.reason} ·{' '}
-                    <span className="text-xs font-normal text-[#A1A1AA]">
+                    <span className="text-xs font-normal text-ink-muted">
                       {report.targetType} ({report.targetId})
                     </span>
                   </p>
                   {report.details && (
-                    <p className="text-xs text-[#A1A1AA] leading-relaxed">{report.details}</p>
+                    <p className="text-xs text-ink-muted leading-relaxed">{report.details}</p>
                   )}
-                  <p className="text-[11px] text-[#71717A]">
-                    Status: <strong className="text-[#D4AF37]">{report.status}</strong> ·{' '}
+                  <p className="text-[11px] text-ink-subtle">
+                    Status: <strong className="text-accent-strong">{report.status}</strong> ·{' '}
                     {formatRelativeTime(report.createdAt)}
                   </p>
                 </div>
@@ -291,7 +295,7 @@ export function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleResolveReport(report, false)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-accent-strong/40 text-accent-strong hover:bg-accent-strong/10 inline-flex items-center gap-1.5"
                     >
                       <Check className="w-3.5 h-3.5" />
                       <span>Resolve</span>
@@ -299,7 +303,7 @@ export function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleDismissReport(report)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 text-[#A1A1AA] hover:text-[#F8F9FA] inline-flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-hairline text-ink-muted hover:text-ink-2 inline-flex items-center gap-1.5"
                     >
                       <X className="w-3.5 h-3.5" />
                       <span>Dismiss</span>
@@ -311,7 +315,7 @@ export function AdminPage() {
           )}
         </div>
       ) : tab === 'members' ? (
-        <div className="bg-[#151519] border border-white/[0.08] rounded-2xl divide-y divide-white/[0.06] overflow-hidden">
+        <div className="bg-surface-2 border border-hairline rounded-2xl divide-y divide-hairline overflow-hidden">
           {members.map((m) => (
             <div
               key={m.uid}
@@ -320,11 +324,11 @@ export function AdminPage() {
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar src={m.avatarUrl} name={m.fullName} size="sm" />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-[#F8F9FA] truncate">
+                  <p className="text-sm font-semibold text-ink-2 truncate">
                     {m.fullName}{' '}
-                    <span className="text-xs font-normal text-[#A1A1AA]">@{m.username}</span>
+                    <span className="text-xs font-normal text-ink-muted">@{m.username}</span>
                   </p>
-                  <p className="text-xs text-[#71717A] font-mono tabular-nums">
+                  <p className="text-xs text-ink-subtle font-mono tabular-nums">
                     {m.postsCount} posts · {m.followersCount} followers ·{' '}
                     {m.isSuspended ? 'Suspended' : 'Active'}
                   </p>
@@ -337,7 +341,7 @@ export function AdminPage() {
                   onClick={() => handleToggleSuspend(m)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 self-start sm:self-auto ${
                     m.isSuspended
-                      ? 'border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10'
+                      ? 'border border-accent-strong/40 text-accent-strong hover:bg-accent-strong/10'
                       : 'bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
                   }`}
                 >
@@ -351,22 +355,26 @@ export function AdminPage() {
       ) : tab === 'announcements' ? (
         <form
           onSubmit={handleSendAnnouncement}
-          className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-5 max-w-xl"
+          className="bg-surface-2 border border-hairline rounded-2xl p-6 space-y-5 max-w-xl"
         >
-          <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-            <Megaphone className="w-4 h-4 text-[#D4AF37]" />
-            <div>
-              <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
-                Important App Announcement
+          <div className="flex items-center gap-3 pb-3 border-b border-hairline">
+            <img
+              src={APP_NOTIFICATION_LOGO_URL}
+              alt={APP_NOTIFICATION_SENDER_NAME}
+              className="w-10 h-10 rounded-xl object-cover border border-accent/45 bg-canvas shrink-0"
+            />
+            <div className="min-w-0">
+              <h2 className="font-display text-base font-semibold text-ink-2">
+                Official App Notification
               </h2>
-              <p className="text-xs text-[#A1A1AA]">
-                Broadcast an official Hostel Friend alert to active community members
+              <p className="text-xs text-ink-muted">
+                Sent from <span className="text-accent font-semibold">{APP_NOTIFICATION_SENDER_NAME}</span> with the app logo — never your personal profile photo
               </p>
             </div>
           </div>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
-            Announcement Title
+          <label className="block text-xs font-medium text-ink-muted">
+            Notification Title
             <input
               type="text"
               required
@@ -374,22 +382,58 @@ export function AdminPage() {
               value={announcementTitle}
               onChange={(e) => setAnnouncementTitle(e.target.value)}
               placeholder="e.g., Campus Photography Contest This Friday"
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
             />
           </label>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
-            Announcement Message
+          <label className="block text-xs font-medium text-ink-muted">
+            Notification Message
             <textarea
               rows={4}
               required
               maxLength={260}
               value={announcementBody}
               onChange={(e) => setAnnouncementBody(e.target.value)}
-              placeholder="Write a clear, helpful announcement for Hostel Friend members..."
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37] resize-none"
+              placeholder="Write a clear, helpful message from Hostel Friend..."
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong resize-none"
             />
           </label>
+
+          {/* Live Member Inbox Preview */}
+          <div className="rounded-xl bg-canvas-alt border border-hairline p-3.5 space-y-2">
+            <p className="text-[11px] font-mono uppercase tracking-wider text-ink-subtle">
+              Member Inbox Preview
+            </p>
+            <div className="flex items-start gap-3">
+              <div className="relative shrink-0">
+                <img
+                  src={APP_NOTIFICATION_LOGO_URL}
+                  alt={APP_NOTIFICATION_SENDER_NAME}
+                  className="w-10 h-10 rounded-xl object-cover border border-accent/45 bg-surface-2"
+                />
+                <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-gradient-to-br from-accent-soft to-accent-deep flex items-center justify-center shadow-sm">
+                  <Megaphone className="w-3 h-3 text-accent-fg" />
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-accent flex flex-wrap items-center gap-1.5">
+                  <span>{APP_NOTIFICATION_SENDER_NAME}</span>
+                  {announcementTitle.trim() && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="normal-case tracking-normal font-semibold text-ink-2">
+                        {announcementTitle.trim()}
+                      </span>
+                    </>
+                  )}
+                </p>
+                <p className="text-xs text-ink-muted mt-0.5 leading-relaxed break-words">
+                  {announcementBody.trim() ||
+                    'Your notification message will appear here under the Hostel Friend app logo.'}
+                </p>
+              </div>
+            </div>
+          </div>
 
           <button
             type="submit"
@@ -397,22 +441,22 @@ export function AdminPage() {
             className="gold-gradient-btn px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center gap-2 disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>{sendingAnnouncement ? 'Sending...' : 'Send Announcement'}</span>
+            <span>{sendingAnnouncement ? 'Sending...' : 'Send App Notification'}</span>
           </button>
         </form>
       ) : (
         <form
           onSubmit={handleSavePlatformSettings}
-          className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-5 max-w-xl"
+          className="bg-surface-2 border border-hairline rounded-2xl p-6 space-y-5 max-w-xl"
         >
-          <div className="flex items-center gap-2.5 pb-2 border-b border-white/[0.06]">
-            <Sliders className="w-4 h-4 text-[#D4AF37]" />
-            <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-hairline">
+            <Sliders className="w-4 h-4 text-accent-strong" />
+            <h2 className="font-display text-base font-semibold text-ink-2">
               Global Platform Settings
             </h2>
           </div>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Max Upload Size (MB, 1–100)
             <input
               type="number"
@@ -420,21 +464,21 @@ export function AdminPage() {
               max={100}
               value={maxUploadSizeMB}
               onChange={(e) => setMaxUploadSizeMB(Number(e.target.value))}
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             />
           </label>
 
           <label className="flex items-center justify-between gap-4 cursor-pointer py-1">
-            <span className="text-sm text-[#F8F9FA]">Allow New Member Registrations</span>
+            <span className="text-sm text-ink-2">Allow New Member Registrations</span>
             <input
               type="checkbox"
               checked={allowNewRegistrations}
               onChange={(e) => setAllowNewRegistrations(e.target.checked)}
-              className="w-4 h-4 accent-[#D4AF37]"
+              className="w-4 h-4 accent-accent-strong"
             />
           </label>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Community Announcement Banner (optional)
             <input
               type="text"
@@ -442,17 +486,17 @@ export function AdminPage() {
               value={maintenanceNotice}
               onChange={(e) => setMaintenanceNotice(e.target.value)}
               placeholder="Leave blank to hide banner"
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             />
           </label>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Featured Hashtags (comma separated)
             <input
               type="text"
               value={hashtagsCsv}
               onChange={(e) => setHashtagsCsv(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             />
           </label>
 

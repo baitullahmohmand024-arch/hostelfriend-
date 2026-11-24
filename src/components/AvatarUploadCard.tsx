@@ -121,16 +121,16 @@ export function AvatarUploadCard() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-[#151519] border border-white/[0.08] rounded-2xl p-6 space-y-4"
+      className="glass-card rounded-2xl p-6 space-y-4"
     >
-      <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+      <div className="flex items-center justify-between pb-2 border-b border-hairline">
         <div className="flex items-center gap-2.5">
-          <Camera className="w-4 h-4 text-[#D4AF37]" />
-          <h2 className="font-display text-base font-semibold text-[#F8F9FA]">
+          <Camera className="w-4 h-4 text-accent-strong" />
+          <h2 className="font-display text-base font-semibold text-ink-2">
             Upload Your Avatar
           </h2>
         </div>
-        <span className="text-[11px] text-[#71717A]">JPEG, PNG, or WebP · Max 5 MB</span>
+        <span className="text-[11px] text-ink-subtle">JPEG, PNG, or WebP · Max 5 MB</span>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -138,13 +138,13 @@ export function AvatarUploadCard() {
           src={previewUrl || profile.avatarUrl}
           name={profile.fullName}
           size="lg"
-          className="ring-2 ring-[#D4AF37]/30"
+          className="ring-2 ring-accent-strong/30"
         />
 
         <div className="flex-1 min-w-0 space-y-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-white/15 bg-[#0A0A0C] text-xs font-medium text-[#F8F9FA] hover:border-[#D4AF37]/50 transition-colors inline-flex items-center gap-2">
-              <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-hairline-strong bg-canvas-alt text-xs font-medium text-ink-2 hover:border-accent-strong/50 transition-colors inline-flex items-center gap-2">
+              <Upload className="w-3.5 h-3.5 text-accent-strong" />
               <span>{selectedFile ? 'Change Image' : 'Choose Image'}</span>
               <input
                 name="file"
@@ -168,12 +168,12 @@ export function AvatarUploadCard() {
           </div>
 
           {selectedFile ? (
-            <p className="text-xs text-[#A1A1AA] truncate">
-              Selected: <span className="text-[#F8F9FA]">{selectedFile.name}</span> (
+            <p className="text-xs text-ink-muted truncate">
+              Selected: <span className="text-ink-2">{selectedFile.name}</span> (
               {formatBytes(selectedFile.size)})
             </p>
           ) : (
-            <p className="text-xs text-[#71717A]">
+            <p className="text-xs text-ink-subtle">
               Choose a photo and tap Upload to save it to your Hostel Friend profile.
             </p>
           )}
@@ -181,9 +181,9 @@ export function AvatarUploadCard() {
       </div>
 
       {uploading && (
-        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+        <div className="w-full h-1.5 rounded-full bg-hover-tint overflow-hidden">
           <div
-            className="h-full bg-[#D4AF37] transition-all duration-150"
+            className="h-full bg-accent-strong transition-all duration-150"
             style={{ width: `${Math.max(5, progressPercent)}%` }}
           />
         </div>
@@ -196,14 +196,14 @@ export function AvatarUploadCard() {
       )}
 
       {blob && (
-        <div className="rounded-xl bg-[#0A0A0C] border border-[#D4AF37]/25 p-3 flex items-center justify-between gap-3">
+        <div className="rounded-xl bg-canvas-alt border border-accent-strong/25 p-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-accent-strong shrink-0" />
             <a
               href={blob.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[#D4AF37] hover:underline truncate"
+              className="text-xs text-accent-strong hover:underline truncate"
             >
               {blob.url}
             </a>
@@ -213,7 +213,7 @@ export function AvatarUploadCard() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Open uploaded avatar URL"
-            className="text-[#A1A1AA] hover:text-[#F8F9FA] shrink-0"
+            className="text-ink-muted hover:text-ink-2 shrink-0"
           >
             <ExternalLink className="w-3.5 h-3.5" />
           </a>

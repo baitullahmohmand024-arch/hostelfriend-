@@ -5,12 +5,14 @@ import { useToast } from '../context/ToastContext';
 import {
   deletePost,
   fetchPostById,
-  getUserLikedPostIds,
+  getUserPostReactions,
   getUserSavedPostIds,
-  toggleLikePost,
+  reactToPost,
   toggleSavePost,
 } from '../services/postService';
-import { Post } from '../types';
+import { Post, ReactionType } from '../types';
+import { computeNextReactionState } from '../utils/reactions';
+import { formatUserFriendlyError } from '../lib/firestoreError';
 import { PostCard } from './PostCard';
 
 interface PostDetailModalProps {
@@ -37,7 +39,7 @@ export function PostDetailModal({
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
@@ -53,17 +55,17 @@ export function PostDetailModal({
 
     Promise.all([
       fetchPostById(postId),
-      profile ? getUserLikedPostIds(profile.uid) : Promise.resolve(new Set<string>()),
+      profile ? getUserPostReactions(profile.uid) : Promise.resolve(new Map<string, ReactionType>()),
       profile ? getUserSavedPostIds(profile.uid) : Promise.resolve(new Set<string>()),
     ])
-      .then(([loaded, likes, saves]) => {
+      .then(([loaded, reactions, saves]) => {
         if (cancelled) return;
         if (!loaded) {
           setPost(null);
           setNotFound(true);
         } else {
           setPost(loaded);
-          setIsLiked(likes.has(loaded.id));
+          setUserReaction(reactions.get(loaded.id) || null);
           setIsSaved(saves.has(loaded.id));
         }
       })
@@ -81,24 +83,61 @@ export function PostDetailModal({
 
   if (!postId) return null;
 
-  const handleToggleLike = async (target: Post) => {
+  const handleSelectReaction = async (target: Post, nextReactionChoice: ReactionType | null) => {
     if (!profile) {
       onRequireAuth();
       return;
     }
-    const prevLiked = isLiked;
-    setIsLiked(!prevLiked);
+    const prevReaction = userReaction;
+    const prevSnapshot = { likesCount: target.likesCount, reactionCounts: target.reactionCounts };
+    const optimistic = computeNextReactionState(target, prevReaction, nextReactionChoice);
+
+    setUserReaction(optimistic.nextReaction);
     setPost((p) =>
-      p ? { ...p, likesCount: Math.max(0, p.likesCount + (prevLiked ? -1 : 1)) } : p
+      p
+        ? {
+            ...p,
+            likesCount: optimistic.nextLikesCount,
+            reactionCounts: optimistic.nextReactionCounts,
+          }
+        : p
     );
+
     try {
-      await toggleLikePost(target, profile, prevLiked);
-    } catch {
-      setIsLiked(prevLiked);
+      const committed = await reactToPost(target, profile, optimistic.nextReaction);
+      setUserReaction(committed.nextReaction);
       setPost((p) =>
-        p ? { ...p, likesCount: Math.max(0, p.likesCount + (prevLiked ? 1 : -1)) } : p
+        p
+          ? {
+              ...p,
+              likesCount: committed.nextLikesCount,
+              reactionCounts: committed.nextReactionCounts,
+            }
+          : p
       );
-      showToast({ type: 'error', title: 'Could not update like' });
+      if (committed.legacyNotice) {
+        showToast({
+          type: 'info',
+          title: 'Reaction saved as Like',
+          description: committed.legacyNotice,
+        });
+      }
+    } catch (err) {
+      setUserReaction(prevReaction);
+      setPost((p) =>
+        p
+          ? {
+              ...p,
+              likesCount: prevSnapshot.likesCount,
+              reactionCounts: prevSnapshot.reactionCounts,
+            }
+          : p
+      );
+      showToast({
+        type: 'error',
+        title: 'Could not update reaction',
+        description: formatUserFriendlyError(err, 'Please try again.'),
+      });
     }
   };
 
@@ -136,34 +175,34 @@ export function PostDetailModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl my-4 sm:my-8 space-y-3"
+        className="w-full max-w-xl my-4 sm:my-8 space-y-3 hf-modal-enter"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#F5C542]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
             Post Activity
           </span>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close post"
-            className="w-9 h-9 rounded-full bg-[#111114] border border-[#F5C542]/30 text-[#FFFFFF] hover:text-[#F5C542] flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-full glass-btn text-ink hover:text-accent flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {loading ? (
-          <div className="bg-[#111114] border border-[#F5C542]/20 rounded-2xl p-12 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-6 h-6 text-[#F5C542] animate-spin" />
-            <p className="text-xs text-[#A5A5AD]">Loading post...</p>
+          <div className="glass-card rounded-2xl p-12 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-6 h-6 text-accent animate-spin" />
+            <p className="text-xs text-ink-muted">Loading post...</p>
           </div>
         ) : notFound || !post ? (
-          <div className="bg-[#111114] border border-[#F5C542]/20 rounded-2xl p-10 text-center">
-            <p className="font-display text-base font-semibold text-[#FFFFFF]">
+          <div className="glass-card rounded-2xl p-10 text-center">
+            <p className="font-display text-base font-semibold text-ink">
               Post unavailable
             </p>
-            <p className="mt-1 text-xs text-[#A5A5AD]">
+            <p className="mt-1 text-xs text-ink-muted">
               This post may have been removed by its author or moderation.
             </p>
           </div>
@@ -173,11 +212,11 @@ export function PostDetailModal({
             post={post}
             currentUser={profile}
             isAdmin={isAdmin}
-            isLiked={isLiked}
+            userReaction={userReaction}
             isSaved={isSaved}
             initialCommentsOpen={openCommentsByDefault}
             highlightCommentId={highlightCommentId}
-            onToggleLike={handleToggleLike}
+            onSelectReaction={handleSelectReaction}
             onToggleSave={handleToggleSave}
             onDeletePost={handleDeletePost}
             onOpenProfile={(uid) => {

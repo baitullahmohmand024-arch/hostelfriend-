@@ -118,16 +118,16 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl bg-[#111114] border border-[#F5C542]/30 shadow-[0_24px_70px_rgba(0,0,0,0.88)] overflow-hidden"
+        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl glass-modal hf-modal-enter overflow-hidden"
       >
-        <div className="px-5 py-4 border-b border-white/[0.08] flex items-center justify-between bg-[#15151A]">
+        <div className="px-5 py-4 border-b border-hairline flex items-center justify-between bg-surface-2">
           <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F8D162] via-[#F5C542] to-[#D99B19] text-[#050505] flex items-center justify-center">
+            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-soft via-accent to-accent-deep text-accent-fg flex items-center justify-center">
               <Share2 className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-display text-base font-bold text-[#FFFFFF]">Share Post</h2>
-              <p className="text-[11px] text-[#A5A5AD] truncate max-w-[230px]">
+              <h2 className="font-display text-base font-bold text-ink">Share Post</h2>
+              <p className="text-[11px] text-ink-muted truncate max-w-[230px]">
                 By {post.authorName} · @{post.authorUsername}
               </p>
             </div>
@@ -137,15 +137,15 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
             type="button"
             onClick={onClose}
             aria-label="Close share dialog"
-            className="p-2 rounded-full text-[#A5A5AD] hover:text-[#FFFFFF] hover:bg-white/[0.06] transition-colors"
+            className="p-2 rounded-full text-ink-muted hover:text-ink hover:bg-hover-tint transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
-          <div className="rounded-xl bg-[#09090B] border border-white/[0.08] px-3.5 py-2.5">
-            <p className="text-xs text-[#A5A5AD] line-clamp-2 leading-relaxed">{previewText}</p>
+          <div className="rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5">
+            <p className="text-xs text-ink-muted line-clamp-2 leading-relaxed">{previewText}</p>
           </div>
 
           <div className="grid grid-cols-1 gap-2.5">
@@ -154,7 +154,7 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => playSound('ui-tap')}
-              className="w-full min-h-[46px] px-4 rounded-xl bg-[#25D366]/15 border border-[#25D366]/40 hover:bg-[#25D366]/25 text-[#FFFFFF] text-sm font-semibold flex items-center justify-between transition-colors"
+              className="w-full min-h-[46px] px-4 rounded-xl bg-[#25D366]/15 border border-[#25D366]/40 hover:bg-[#25D366]/25 text-ink text-sm font-semibold flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-2.5">
                 <MessageCircle className="w-4 h-4 text-[#25D366]" />
@@ -183,26 +183,26 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
               <button
                 type="button"
                 onClick={handleNativeShare}
-                className="w-full min-h-[44px] px-4 rounded-xl bg-[#19191D] border border-[#F5C542]/25 hover:border-[#F5C542]/50 text-[#FFFFFF] text-sm font-semibold flex items-center justify-between transition-colors"
+                className="w-full min-h-[44px] px-4 rounded-xl bg-surface-hover border border-accent/25 hover:border-accent/50 text-ink text-sm font-semibold flex items-center justify-between transition-colors"
               >
                 <span className="flex items-center gap-2.5">
-                  <Share2 className="w-4 h-4 text-[#F5C542]" />
+                  <Share2 className="w-4 h-4 text-accent" />
                   More Apps
                 </span>
-                <span className="text-xs text-[#A5A5AD]">System Share</span>
+                <span className="text-xs text-ink-muted">System Share</span>
               </button>
             )}
           </div>
 
           <div>
-            <label className="block text-[11px] font-medium text-[#A5A5AD] mb-1.5">
+            <label className="block text-[11px] font-medium text-ink-muted mb-1.5">
               Post Link
               <input
                 type="text"
                 readOnly
                 value={shareUrl}
                 onClick={(e) => e.currentTarget.select()}
-                className="mt-1 w-full rounded-xl bg-[#050505] border border-white/10 px-3 py-2 text-xs font-mono text-[#F5C542] focus:outline-none focus:border-[#F5C542]"
+                className="mt-1 w-full rounded-xl bg-canvas border border-hairline px-3 py-2 text-xs font-mono text-accent focus:outline-none focus:border-accent"
               />
             </label>
           </div>

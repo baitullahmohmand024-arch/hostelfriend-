@@ -92,6 +92,17 @@
         "hashtags": { "type": "array", "maxLength": 10 },
         "visibility": { "type": "string", "enum": ["public"] },
         "likesCount": { "type": "integer" },
+        "reactionCounts": {
+          "type": "object",
+          "properties": {
+            "like": { "type": "integer" },
+            "love": { "type": "integer" },
+            "haha": { "type": "integer" },
+            "wow": { "type": "integer" },
+            "sad": { "type": "integer" },
+            "care": { "type": "integer" }
+          }
+        },
         "commentsCount": { "type": "integer" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
@@ -148,13 +159,18 @@
     },
     "Like": {
       "title": "Like",
-      "description": "Atomic like record keyed by postId_userId.",
+      "description": "Atomic post reaction/like record keyed by postId_userId.",
       "type": "object",
       "properties": {
         "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "postId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
         "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "reactionType": { "type": "string", "enum": ["like", "love", "haha", "wow", "sad", "care"] },
+        "userUsername": { "type": "string", "maxLength": 24 },
+        "userName": { "type": "string", "maxLength": 64 },
+        "userAvatarUrl": { "type": "string", "maxLength": 32768 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "postId", "userId", "createdAt"]
     },
@@ -469,6 +485,7 @@
         "mediaType": { "type": "string", "enum": ["image", "video"] },
         "caption": { "type": "string", "maxLength": 280 },
         "visibility": { "type": "string", "enum": ["public"] },
+        "likesCount": { "type": "integer" },
         "createdAt": { "type": "string", "format": "date-time" },
         "expiresAt": { "type": "string", "format": "date-time" }
       },
@@ -485,6 +502,87 @@
         "createdAt",
         "expiresAt"
       ]
+    },
+    "StoryLike": {
+      "title": "StoryLike",
+      "description": "Atomic story like record keyed by storyId_userId.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "storyId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "storyAuthorId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userUsername": { "type": "string", "maxLength": 24 },
+        "userName": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "userAvatarUrl": { "type": "string", "maxLength": 32768 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "storyId",
+        "storyAuthorId",
+        "userId",
+        "userUsername",
+        "userName",
+        "userAvatarUrl",
+        "createdAt"
+      ]
+    },
+    "Poll": {
+      "title": "Poll",
+      "description": "Interactive community poll rendered in the Hostel Friend Home Feed.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorUsername": { "type": "string", "minLength": 3, "maxLength": 24, "pattern": "^[a-zA-Z0-9_]+$" },
+        "authorName": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "authorAvatarUrl": { "type": "string", "maxLength": 32768 },
+        "question": { "type": "string", "minLength": 3, "maxLength": 280 },
+        "options": { "type": "array", "minLength": 2, "maxLength": 6 },
+        "count0": { "type": "integer" },
+        "count1": { "type": "integer" },
+        "count2": { "type": "integer" },
+        "count3": { "type": "integer" },
+        "count4": { "type": "integer" },
+        "count5": { "type": "integer" },
+        "totalVotes": { "type": "integer" },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "authorId",
+        "authorUsername",
+        "authorName",
+        "authorAvatarUrl",
+        "question",
+        "options",
+        "count0",
+        "count1",
+        "count2",
+        "count3",
+        "count4",
+        "count5",
+        "totalVotes",
+        "visibility",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PollVote": {
+      "title": "PollVote",
+      "description": "Atomic immutable single-vote record keyed by pollId_userId.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "pollId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "userId": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "optionIndex": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "pollId", "userId", "optionIndex", "createdAt"]
     }
   },
   "firestore": {
@@ -507,6 +605,18 @@
     "/stories/{storyId}": {
       "schema": { "$ref": "#/entities/Story" },
       "description": "24-hour hostel member stories."
+    },
+    "/storyLikes/{storyLikeId}": {
+      "schema": { "$ref": "#/entities/StoryLike" },
+      "description": "Atomic story likes keyed by storyId_userId."
+    },
+    "/polls/{pollId}": {
+      "schema": { "$ref": "#/entities/Poll" },
+      "description": "Interactive community polls shown in the Home Feed."
+    },
+    "/pollVotes/{voteId}": {
+      "schema": { "$ref": "#/entities/PollVote" },
+      "description": "Atomic single-vote records per user keyed by pollId_userId."
     },
     "/comments/{commentId}": {
       "schema": { "$ref": "#/entities/Comment" },

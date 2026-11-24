@@ -30,7 +30,7 @@ export function Avatar({ src, name, size = 'md', className = '' }: AvatarProps) 
         alt={name}
         referrerPolicy="no-referrer"
         onError={() => setImgFailed(true)}
-        className={`${SIZE_CLASSES[size]} rounded-full object-cover border border-white/10 bg-[#151519] shrink-0 ${className}`}
+        className={`${SIZE_CLASSES[size]} rounded-full object-cover border border-hairline bg-surface-2 shrink-0 ${className}`}
       />
     );
   }
@@ -38,7 +38,7 @@ export function Avatar({ src, name, size = 'md', className = '' }: AvatarProps) 
   return (
     <div
       aria-label={name}
-      className={`${SIZE_CLASSES[size]} rounded-full flex items-center justify-center font-display font-semibold tracking-tight bg-gradient-to-br from-[#232329] to-[#151519] text-[#D4AF37] border border-[#D4AF37]/25 shrink-0 ${className}`}
+      className={`${SIZE_CLASSES[size]} rounded-full flex items-center justify-center font-display font-semibold tracking-tight bg-gradient-to-br from-surface-hover to-surface-2 text-accent-strong border border-accent-strong/25 shrink-0 ${className}`}
     >
       {getInitials(name)}
     </div>

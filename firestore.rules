@@ -88,7 +88,7 @@ service cloud.firestore {
       ])
       && data.keys().hasOnly([
         'id', 'authorId', 'authorUsername', 'authorName', 'authorAvatarUrl',
-        'mediaUrl', 'mediaType', 'caption', 'visibility', 'createdAt', 'expiresAt'
+        'mediaUrl', 'mediaType', 'caption', 'visibility', 'likesCount', 'createdAt', 'expiresAt'
       ])
       && isValidId(data.id)
       && isValidId(data.authorId)
@@ -105,8 +105,85 @@ service cloud.firestore {
       && data.mediaType in ['image', 'video']
       && data.caption is string && data.caption.size() <= 280
       && data.visibility == 'public'
+      && (!('likesCount' in data) || (data.likesCount is int && data.likesCount >= 0))
       && data.createdAt is timestamp
       && data.expiresAt is timestamp;
+    }
+
+    function isValidStoryLike(data) {
+      return data.keys().hasAll([
+        'id', 'storyId', 'storyAuthorId', 'userId', 'userUsername', 'userName', 'userAvatarUrl', 'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'storyId', 'storyAuthorId', 'userId', 'userUsername', 'userName', 'userAvatarUrl', 'createdAt'
+      ])
+      && isValidId(data.id)
+      && isValidId(data.storyId)
+      && isValidId(data.storyAuthorId)
+      && isValidId(data.userId)
+      && data.userUsername is string && data.userUsername.size() <= 24
+      && data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 64
+      && data.userAvatarUrl is string && data.userAvatarUrl.size() <= 32768
+      && data.createdAt is timestamp;
+    }
+
+    function isValidPoll(data) {
+      return data.keys().hasAll([
+        'id', 'authorId', 'authorUsername', 'authorName', 'authorAvatarUrl',
+        'question', 'options', 'count0', 'count1', 'count2', 'count3', 'count4', 'count5',
+        'totalVotes', 'visibility', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'id', 'authorId', 'authorUsername', 'authorName', 'authorAvatarUrl',
+        'question', 'options', 'count0', 'count1', 'count2', 'count3', 'count4', 'count5',
+        'totalVotes', 'visibility', 'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.id)
+      && isValidId(data.authorId)
+      && data.authorUsername is string && data.authorUsername.size() >= 3 && data.authorUsername.size() <= 24 && data.authorUsername.matches('^[a-zA-Z0-9_]+$')
+      && data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 64
+      && data.authorAvatarUrl is string && data.authorAvatarUrl.size() <= 32768
+      && data.question is string && data.question.size() >= 3 && data.question.size() <= 280
+      && data.options is list && data.options.size() >= 2 && data.options.size() <= 6
+      && data.options[0] is string && data.options[0].size() >= 1 && data.options[0].size() <= 80
+      && data.options[1] is string && data.options[1].size() >= 1 && data.options[1].size() <= 80
+      && (data.options.size() < 3 || (data.options[2] is string && data.options[2].size() >= 1 && data.options[2].size() <= 80))
+      && (data.options.size() < 4 || (data.options[3] is string && data.options[3].size() >= 1 && data.options[3].size() <= 80))
+      && (data.options.size() < 5 || (data.options[4] is string && data.options[4].size() >= 1 && data.options[4].size() <= 80))
+      && (data.options.size() < 6 || (data.options[5] is string && data.options[5].size() >= 1 && data.options[5].size() <= 80))
+      && data.count0 is int && data.count0 >= 0
+      && data.count1 is int && data.count1 >= 0
+      && data.count2 is int && data.count2 >= 0
+      && data.count3 is int && data.count3 >= 0
+      && data.count4 is int && data.count4 >= 0
+      && data.count5 is int && data.count5 >= 0
+      && data.totalVotes is int && data.totalVotes >= 0
+      && data.visibility == 'public'
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidPollVote(data) {
+      return data.keys().hasAll(['id', 'pollId', 'userId', 'optionIndex', 'createdAt'])
+      && data.keys().hasOnly(['id', 'pollId', 'userId', 'optionIndex', 'createdAt'])
+      && isValidId(data.id)
+      && isValidId(data.pollId)
+      && isValidId(data.userId)
+      && data.optionIndex is int && data.optionIndex >= 0 && data.optionIndex <= 5
+      && data.createdAt is timestamp;
+    }
+
+    function isSinglePollOptionIncremented(idx) {
+      return idx is int
+        && idx >= 0
+        && idx < existing().options.size()
+        && incoming().totalVotes == existing().totalVotes + 1
+        && (idx == 0 ? incoming().count0 == existing().count0 + 1 : incoming().count0 == existing().count0)
+        && (idx == 1 ? incoming().count1 == existing().count1 + 1 : incoming().count1 == existing().count1)
+        && (idx == 2 ? incoming().count2 == existing().count2 + 1 : incoming().count2 == existing().count2)
+        && (idx == 3 ? incoming().count3 == existing().count3 + 1 : incoming().count3 == existing().count3)
+        && (idx == 4 ? incoming().count4 == existing().count4 + 1 : incoming().count4 == existing().count4)
+        && (idx == 5 ? incoming().count5 == existing().count5 + 1 : incoming().count5 == existing().count5);
     }
 
     function isValidUserPrivateSettings(data) {
@@ -137,6 +214,30 @@ service cloud.firestore {
       && data.createdAt is timestamp;
     }
 
+    function isValidReactionType(t) {
+      return t in ['like', 'love', 'haha', 'wow', 'sad', 'care'];
+    }
+
+    function isValidReactionCounts(rc) {
+      return rc is map
+        && rc.keys().hasOnly(['like', 'love', 'haha', 'wow', 'sad', 'care'])
+        && (!('like' in rc) || (rc.like is int && rc.like >= 0))
+        && (!('love' in rc) || (rc.love is int && rc.love >= 0))
+        && (!('haha' in rc) || (rc.haha is int && rc.haha >= 0))
+        && (!('wow' in rc) || (rc.wow is int && rc.wow >= 0))
+        && (!('sad' in rc) || (rc.sad is int && rc.sad >= 0))
+        && (!('care' in rc) || (rc.care is int && rc.care >= 0));
+    }
+
+    function reactionCountsTotal(rc) {
+      return rc.get('like', 0)
+        + rc.get('love', 0)
+        + rc.get('haha', 0)
+        + rc.get('wow', 0)
+        + rc.get('sad', 0)
+        + rc.get('care', 0);
+    }
+
     function isValidPost(data) {
       return data.keys().hasAll([
         'id', 'authorId', 'authorUsername', 'authorName', 'authorAvatarUrl',
@@ -146,7 +247,7 @@ service cloud.firestore {
       && data.keys().hasOnly([
         'id', 'authorId', 'authorUsername', 'authorName', 'authorAvatarUrl',
         'mediaUrl', 'thumbnailUrl', 'mediaType', 'aspectRatio', 'caption', 'hashtags',
-        'visibility', 'likesCount', 'commentsCount', 'createdAt', 'updatedAt'
+        'visibility', 'likesCount', 'reactionCounts', 'commentsCount', 'createdAt', 'updatedAt'
       ])
       && isValidId(data.id)
       && isValidId(data.authorId)
@@ -171,6 +272,7 @@ service cloud.firestore {
       && (data.hashtags.size() == 0 || data.hashtags[0] is string)
       && data.visibility == 'public'
       && data.likesCount is int && data.likesCount >= 0
+      && (!('reactionCounts' in data) || isValidReactionCounts(data.reactionCounts))
       && data.commentsCount is int && data.commentsCount >= 0
       && data.createdAt is timestamp
       && data.updatedAt is timestamp;
@@ -203,11 +305,19 @@ service cloud.firestore {
 
     function isValidLike(data) {
       return data.keys().hasAll(['id', 'postId', 'userId', 'createdAt'])
-      && data.keys().hasOnly(['id', 'postId', 'userId', 'createdAt'])
+      && data.keys().hasOnly([
+        'id', 'postId', 'userId', 'reactionType',
+        'userUsername', 'userName', 'userAvatarUrl', 'createdAt', 'updatedAt'
+      ])
       && isValidId(data.id)
       && isValidId(data.postId)
       && isValidId(data.userId)
-      && data.createdAt is timestamp;
+      && (!('reactionType' in data) || isValidReactionType(data.reactionType))
+      && (!('userUsername' in data) || (data.userUsername is string && data.userUsername.size() <= 24))
+      && (!('userName' in data) || (data.userName is string && data.userName.size() <= 64))
+      && (!('userAvatarUrl' in data) || (data.userAvatarUrl is string && data.userAvatarUrl.size() <= 32768))
+      && data.createdAt is timestamp
+      && (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
     function isValidFollow(data) {
@@ -629,20 +739,31 @@ service cloud.firestore {
                         && isNotSuspended()
                         && incoming().diff(existing()).affectedKeys().hasOnly(['caption', 'hashtags', 'updatedAt'])
                       ) ||
-                      // Action 2: Atomic Like / Unlike counter update paired with /likes/{postId}_{uid}
+                      // Action 2: Atomic React / Switch Reaction / Unreact counter update paired with /likes/{postId}_{uid}
                       (
                         isNotSuspended()
-                        && incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt'])
+                        && (!('reactionCounts' in incoming()) || reactionCountsTotal(incoming().reactionCounts) == incoming().likesCount)
                         && (
                           (
-                            incoming().likesCount == existing().likesCount + 1
+                            incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'reactionCounts', 'updatedAt'])
+                            && incoming().likesCount == existing().likesCount + 1
                             && !exists(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
                             && existsAfter(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
                           ) ||
                           (
-                            incoming().likesCount == existing().likesCount - 1
+                            incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'reactionCounts', 'updatedAt'])
+                            && existing().likesCount >= 1
+                            && incoming().likesCount == existing().likesCount - 1
                             && exists(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
                             && !existsAfter(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
+                          ) ||
+                          (
+                            incoming().diff(existing()).affectedKeys().hasOnly(['reactionCounts', 'updatedAt'])
+                            && incoming().likesCount == existing().likesCount
+                            && exists(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
+                            && existsAfter(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid))
+                            && getAfter(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid)).data.reactionType
+                               != get(/databases/$(database)/documents/likes/$(postId + '_' + request.auth.uid)).data.get('reactionType', 'like')
                           )
                         )
                       ) ||
@@ -672,13 +793,154 @@ service cloud.firestore {
                     && isValidStory(incoming())
                     && incoming().id == storyId
                     && incoming().authorId == request.auth.uid
+                    && (!('likesCount' in incoming()) || incoming().likesCount == 0)
                     && incoming().createdAt == request.time
                     && incoming().expiresAt > request.time
                     && exists(/databases/$(database)/documents/users/$(request.auth.uid));
 
+      allow update: if isNotSuspended()
+                    && isValidId(storyId)
+                    && isValidStory(incoming())
+                    && incoming().id == existing().id
+                    && incoming().authorId == existing().authorId
+                    && incoming().authorUsername == existing().authorUsername
+                    && incoming().authorName == existing().authorName
+                    && incoming().authorAvatarUrl == existing().authorAvatarUrl
+                    && incoming().mediaUrl == existing().mediaUrl
+                    && incoming().mediaType == existing().mediaType
+                    && incoming().caption == existing().caption
+                    && incoming().visibility == existing().visibility
+                    && incoming().createdAt == existing().createdAt
+                    && incoming().expiresAt == existing().expiresAt
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['likesCount'])
+                    && (
+                      (
+                        (
+                          (!('likesCount' in existing()) && incoming().likesCount == 1) ||
+                          (('likesCount' in existing()) && incoming().likesCount == existing().likesCount + 1)
+                        )
+                        && !exists(/databases/$(database)/documents/storyLikes/$(storyId + '_' + request.auth.uid))
+                        && existsAfter(/databases/$(database)/documents/storyLikes/$(storyId + '_' + request.auth.uid))
+                      ) ||
+                      (
+                        ('likesCount' in existing())
+                        && existing().likesCount >= 1
+                        && incoming().likesCount == existing().likesCount - 1
+                        && exists(/databases/$(database)/documents/storyLikes/$(storyId + '_' + request.auth.uid))
+                        && !existsAfter(/databases/$(database)/documents/storyLikes/$(storyId + '_' + request.auth.uid))
+                      )
+                    );
+
       allow delete: if isVerified()
                     && isValidId(storyId)
                     && (isOwner(existing().authorId) || isAdmin());
+    }
+
+    // Story Likes (/storyLikes/{storyLikeId})
+    match /storyLikes/{storyLikeId} {
+      allow get: if isSignedIn()
+                 && isValidId(storyLikeId)
+                 && (resource == null || existing().userId == request.auth.uid || existing().storyAuthorId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+                  && (resource.data.userId == request.auth.uid || resource.data.storyAuthorId == request.auth.uid || isAdmin());
+
+      allow create: if isNotSuspended()
+                    && isValidId(storyLikeId)
+                    && isValidStoryLike(incoming())
+                    && incoming().id == storyLikeId
+                    && incoming().userId == request.auth.uid
+                    && storyLikeId == (incoming().storyId + '_' + request.auth.uid)
+                    && exists(/databases/$(database)/documents/stories/$(incoming().storyId))
+                    && incoming().storyAuthorId == get(/databases/$(database)/documents/stories/$(incoming().storyId)).data.authorId
+                    && (
+                      (
+                        !('likesCount' in get(/databases/$(database)/documents/stories/$(incoming().storyId)).data)
+                        && getAfter(/databases/$(database)/documents/stories/$(incoming().storyId)).data.likesCount == 1
+                      ) ||
+                      (
+                        ('likesCount' in get(/databases/$(database)/documents/stories/$(incoming().storyId)).data)
+                        && getAfter(/databases/$(database)/documents/stories/$(incoming().storyId)).data.likesCount
+                           == get(/databases/$(database)/documents/stories/$(incoming().storyId)).data.likesCount + 1
+                      )
+                    )
+                    && incoming().createdAt == request.time;
+
+      allow delete: if isVerified()
+                    && isValidId(storyLikeId)
+                    && existing().userId == request.auth.uid
+                    && exists(/databases/$(database)/documents/stories/$(existing().storyId))
+                    && ('likesCount' in get(/databases/$(database)/documents/stories/$(existing().storyId)).data)
+                    && getAfter(/databases/$(database)/documents/stories/$(existing().storyId)).data.likesCount
+                       == get(/databases/$(database)/documents/stories/$(existing().storyId)).data.likesCount - 1;
+    }
+
+    // Polls (/polls/{pollId})
+    match /polls/{pollId} {
+      allow get: if isValidId(pollId) && (resource == null || existing().visibility == 'public');
+      allow list: if (request.query.limit is int && request.query.limit <= 50) || isAdmin();
+
+      allow create: if isNotSuspended()
+                    && isValidId(pollId)
+                    && isValidPoll(incoming())
+                    && incoming().id == pollId
+                    && incoming().authorId == request.auth.uid
+                    && incoming().totalVotes == 0
+                    && incoming().count0 == 0
+                    && incoming().count1 == 0
+                    && incoming().count2 == 0
+                    && incoming().count3 == 0
+                    && incoming().count4 == 0
+                    && incoming().count5 == 0
+                    && incoming().createdAt == request.time
+                    && incoming().updatedAt == request.time
+                    && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+
+      allow update: if isNotSuspended()
+                    && isValidId(pollId)
+                    && isValidPoll(incoming())
+                    && incoming().id == existing().id
+                    && incoming().authorId == existing().authorId
+                    && incoming().authorUsername == existing().authorUsername
+                    && incoming().authorName == existing().authorName
+                    && incoming().authorAvatarUrl == existing().authorAvatarUrl
+                    && incoming().question == existing().question
+                    && incoming().options == existing().options
+                    && incoming().visibility == existing().visibility
+                    && incoming().createdAt == existing().createdAt
+                    && incoming().updatedAt == request.time
+                    && !exists(/databases/$(database)/documents/pollVotes/$(pollId + '_' + request.auth.uid))
+                    && existsAfter(/databases/$(database)/documents/pollVotes/$(pollId + '_' + request.auth.uid))
+                    && isSinglePollOptionIncremented(
+                      getAfter(/databases/$(database)/documents/pollVotes/$(pollId + '_' + request.auth.uid)).data.optionIndex
+                    );
+
+      allow delete: if isVerified()
+                    && isValidId(pollId)
+                    && (isOwner(existing().authorId) || isAdmin());
+    }
+
+    // Poll Votes (/pollVotes/{voteId})
+    match /pollVotes/{voteId} {
+      allow get: if isSignedIn()
+                 && isValidId(voteId)
+                 && (resource == null || existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn()
+                  && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow create: if isNotSuspended()
+                    && isValidId(voteId)
+                    && isValidPollVote(incoming())
+                    && incoming().id == voteId
+                    && incoming().userId == request.auth.uid
+                    && voteId == (incoming().pollId + '_' + request.auth.uid)
+                    && !exists(/databases/$(database)/documents/pollVotes/$(voteId))
+                    && exists(/databases/$(database)/documents/polls/$(incoming().pollId))
+                    && incoming().optionIndex < get(/databases/$(database)/documents/polls/$(incoming().pollId)).data.options.size()
+                    && getAfter(/databases/$(database)/documents/polls/$(incoming().pollId)).data.totalVotes
+                       == get(/databases/$(database)/documents/polls/$(incoming().pollId)).data.totalVotes + 1
+                    && incoming().createdAt == request.time;
+
+      allow update, delete: if false;
     }
 
     // Comments (/comments/{commentId})
@@ -706,10 +968,17 @@ service cloud.firestore {
                     );
     }
 
-    // Likes (/likes/{likeId})
+    // Likes & Reactions (/likes/{likeId})
     match /likes/{likeId} {
-      allow get: if isSignedIn() && isValidId(likeId) && (resource == null || existing().userId == request.auth.uid);
-      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isValidId(likeId)
+                 && (
+                   resource == null
+                   || (isSignedIn() && existing().userId == request.auth.uid)
+                   || (existing().postId is string && exists(/databases/$(database)/documents/posts/$(existing().postId)))
+                 );
+      allow list: if (isSignedIn() && resource.data.userId == request.auth.uid)
+                  || (request.query.limit is int && request.query.limit <= 100)
+                  || isAdmin();
 
       allow create: if isNotSuspended()
                     && isValidId(likeId)
@@ -720,7 +989,26 @@ service cloud.firestore {
                     && exists(/databases/$(database)/documents/posts/$(incoming().postId))
                     && getAfter(/databases/$(database)/documents/posts/$(incoming().postId)).data.likesCount
                        == get(/databases/$(database)/documents/posts/$(incoming().postId)).data.likesCount + 1
-                    && incoming().createdAt == request.time;
+                    && incoming().createdAt == request.time
+                    && (!('updatedAt' in incoming()) || incoming().updatedAt == request.time);
+
+      allow update: if isNotSuspended()
+                    && isValidId(likeId)
+                    && isValidLike(incoming())
+                    && existing().userId == request.auth.uid
+                    && incoming().id == existing().id
+                    && incoming().postId == existing().postId
+                    && incoming().userId == existing().userId
+                    && incoming().createdAt == existing().createdAt
+                    && ('reactionType' in incoming())
+                    && isValidReactionType(incoming().reactionType)
+                    && incoming().updatedAt == request.time
+                    && incoming().diff(existing()).affectedKeys().hasOnly([
+                      'reactionType', 'userUsername', 'userName', 'userAvatarUrl', 'updatedAt'
+                    ])
+                    && exists(/databases/$(database)/documents/posts/$(existing().postId))
+                    && getAfter(/databases/$(database)/documents/posts/$(existing().postId)).data.likesCount
+                       == get(/databases/$(database)/documents/posts/$(existing().postId)).data.likesCount;
 
       allow delete: if isVerified()
                     && isValidId(likeId)

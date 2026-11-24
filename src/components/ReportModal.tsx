@@ -78,12 +78,12 @@ export function ReportModal({
     >
       <form
         onSubmit={handleSubmit}
-        className="glass-surface w-full max-w-md rounded-2xl p-6 shadow-2xl border border-white/10"
+        className="glass-modal hf-modal-enter w-full max-w-md rounded-2xl p-6"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <Flag className="w-4 h-4 text-[#D4AF37]" />
-            <h3 id="report-modal-title" className="text-lg font-display font-semibold text-[#F8F9FA]">
+            <Flag className="w-4 h-4 text-accent-strong" />
+            <h3 id="report-modal-title" className="text-lg font-display font-semibold text-ink-2">
               Report {targetType}
             </h3>
           </div>
@@ -91,23 +91,23 @@ export function ReportModal({
             type="button"
             onClick={onClose}
             aria-label="Close report dialog"
-            className="text-[#A1A1AA] hover:text-[#F8F9FA] p-1 rounded-lg transition-colors"
+            className="text-ink-muted hover:text-ink-2 p-1 rounded-lg transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <p className="mt-2 text-xs text-[#A1A1AA]">
-          Reporting: <span className="text-[#F8F9FA] font-medium">{targetLabel}</span>
+        <p className="mt-2 text-xs text-ink-muted">
+          Reporting: <span className="text-ink-2 font-medium">{targetLabel}</span>
         </p>
 
         <div className="mt-4 space-y-3">
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Reason
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
             >
               {REPORT_REASONS.map((r) => (
                 <option key={r} value={r}>
@@ -117,7 +117,7 @@ export function ReportModal({
             </select>
           </label>
 
-          <label className="block text-xs font-medium text-[#A1A1AA]">
+          <label className="block text-xs font-medium text-ink-muted">
             Additional context (optional)
             <textarea
               value={details}
@@ -125,7 +125,7 @@ export function ReportModal({
               rows={3}
               maxLength={600}
               placeholder="Share details that help moderators evaluate this report..."
-              className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37] resize-none"
+              className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong resize-none"
             />
           </label>
         </div>
@@ -134,7 +134,7 @@ export function ReportModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-xl border border-white/10 text-[#F8F9FA] hover:bg-white/5 transition-colors whitespace-nowrap shrink-0"
+            className="px-4 py-2 text-sm font-medium rounded-xl border border-hairline text-ink-2 hover:bg-hover-tint transition-colors whitespace-nowrap shrink-0"
           >
             Cancel
           </button>

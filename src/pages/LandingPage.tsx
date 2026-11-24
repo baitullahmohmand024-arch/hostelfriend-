@@ -88,22 +88,22 @@ export function LandingPage({
   }, [showDeveloperModal, lightboxPhoto]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#FFFFFF] overflow-x-clip">
+    <div className="min-h-screen bg-canvas text-ink overflow-x-clip">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#050505]/90 backdrop-blur-xl border-b border-white/[0.08]">
+      <header className="sticky top-0 z-40 bg-canvas/90 backdrop-blur-xl border-b border-hairline">
         <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           <a href="#top" className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink">
             <img
               src="/icons/icon-192.png"
               alt="Hostel Friend"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-white/15 shrink-0 shadow-md"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover border border-hairline-strong shrink-0 shadow-md"
             />
             <div className="min-w-0 leading-tight">
               <p className="font-display font-extrabold tracking-tight text-base sm:text-xl whitespace-nowrap">
-                <span className="text-[#FFFFFF]">Hostel </span>
-                <span className="text-[#F5C542]">Friend</span>
+                <span className="text-ink">Hostel </span>
+                <span className="text-accent">Friend</span>
               </p>
-              <p className="text-[10px] sm:text-xs text-[#D0D0D0] tracking-wide truncate">
+              <p className="text-[10px] sm:text-xs text-ink-muted tracking-wide truncate">
                 Connect • Share • Discover
               </p>
             </div>
@@ -124,7 +124,7 @@ export function LandingPage({
       </header>
 
       {/* Cinematic Welcome Hero + Tilted 4-Photo Gallery + Action Buttons + Architectural Silhouette */}
-      <section id="top" className="relative bg-[#050505] border-b border-white/[0.06] overflow-hidden">
+      <section id="top" className="relative bg-canvas border-b border-hairline overflow-hidden">
         {/* Atmospheric Dusk Hero Backdrop */}
         <div className="relative pt-8 sm:pt-12 pb-6 sm:pb-8">
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden">
@@ -138,11 +138,11 @@ export function LandingPage({
                 className="w-full h-full object-cover object-center scale-[1.03] brightness-[0.65] contrast-[1.08] saturate-[1.05]"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-b from-[#16120A] via-[#0D0B07] to-[#050505]" />
+              <div className="w-full h-full bg-gradient-to-b from-surface via-canvas-alt to-canvas" />
             )}
             {/* Dusk Sky & Vignette Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/95 via-[#050505]/35 to-[#050505]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/75 via-transparent to-[#050505]/75" />
+            <div className="absolute inset-0 bg-gradient-to-b from-canvas/95 via-canvas/55 dark:via-canvas/35 to-canvas" />
+            <div className="absolute inset-0 bg-gradient-to-r from-canvas/80 via-transparent to-canvas/80" />
             {/* Warm Golden Lighting Around the Architecture */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_58%,rgba(245,197,66,0.22),transparent_62%)]" />
           </div>
@@ -150,18 +150,18 @@ export function LandingPage({
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
             {/* Main Title */}
             <div className="pt-1 sm:pt-2">
-              <p className="font-script text-4xl sm:text-5xl md:text-6xl text-[#F5C542] leading-none drop-shadow-[0_2px_18px_rgba(245,197,66,0.4)]">
+              <p className="font-script text-4xl sm:text-5xl md:text-6xl text-accent leading-none drop-shadow-[0_2px_18px_rgba(245,197,66,0.4)]">
                 Welcome to
               </p>
-              <h1 className="mt-1 font-display font-extrabold tracking-tight text-4xl sm:text-6xl md:text-7xl leading-[1.04] drop-shadow-[0_6px_24px_rgba(0,0,0,0.9)]">
-                <span className="text-[#FFFFFF]">Hostel </span>
-                <span className="text-[#F5C542]">Friend</span>
+              <h1 className="mt-1 font-display font-extrabold tracking-tight text-4xl sm:text-6xl md:text-7xl leading-[1.04] dark:drop-shadow-[0_6px_24px_rgba(0,0,0,0.9)]">
+                <span className="text-ink">Hostel </span>
+                <span className="text-accent">Friend</span>
               </h1>
               {/* Curved Golden Underline Swoosh */}
               <div className="mt-1.5 flex justify-center" aria-hidden="true">
                 <svg
                   viewBox="0 0 260 18"
-                  className="w-44 sm:w-64 h-3.5 text-[#F5C542] drop-shadow-[0_2px_10px_rgba(245,197,66,0.5)]"
+                  className="w-44 sm:w-64 h-3.5 text-accent drop-shadow-[0_2px_10px_rgba(245,197,66,0.5)]"
                   fill="none"
                 >
                   <path
@@ -179,11 +179,11 @@ export function LandingPage({
 
             {/* Welcome Message */}
             <div className="pt-2">
-              <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
-                <span className="text-[#FFFFFF]">Your Hostel. Your People. </span>
-                <span className="text-[#F5C542]">Your Memories.</span>
+              <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight dark:drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+                <span className="text-ink">Your Hostel. Your People. </span>
+                <span className="text-accent">Your Memories.</span>
               </h2>
-              <p className="mt-3 text-sm sm:text-base text-[#D0D0D0] max-w-lg mx-auto leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+              <p className="mt-3 text-sm sm:text-base text-ink-2 dark:text-ink-muted max-w-lg mx-auto leading-relaxed dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                 A place where hostel life becomes unforgettable.
                 <br />
                 Capture moments, share experiences and stay connected with your hostel friends.
@@ -194,12 +194,12 @@ export function LandingPage({
 
         {/* Golden Light Divider + Graduation Cap */}
         <div className="relative z-10 max-w-3xl mx-auto px-4 pt-2 pb-6 flex items-center justify-center gap-4">
-          <div className="h-[1.5px] flex-1 bg-gradient-to-r from-transparent via-[#F5C542]/70 to-[#F5C542]" />
+          <div className="h-[1.5px] flex-1 bg-gradient-to-r from-transparent via-accent/70 to-accent" />
           <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-[#F5C542]/25 blur-md" />
-            <GraduationCap className="relative w-5 h-5 sm:w-6 sm:h-6 text-[#F5C542]" />
+            <div className="absolute inset-0 rounded-full bg-accent/25 blur-md" />
+            <GraduationCap className="relative w-5 h-5 sm:w-6 sm:h-6 text-accent" />
           </div>
-          <div className="h-[1.5px] flex-1 bg-gradient-to-l from-transparent via-[#F5C542]/70 to-[#F5C542]" />
+          <div className="h-[1.5px] flex-1 bg-gradient-to-l from-transparent via-accent/70 to-accent" />
         </div>
 
         {/* Four-Photo Tilted College & Hostel Gallery */}
@@ -219,12 +219,12 @@ export function LandingPage({
                   type="button"
                   onClick={() => !isFailed && setLightboxPhoto(photo)}
                   aria-label={photo.caption}
-                  className={`group relative aspect-[3/4] sm:aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden border-[2.5px] sm:border-[3.5px] border-white bg-[#101010] shadow-[0_14px_32px_rgba(0,0,0,0.85)] transition-transform duration-300 hover:scale-[1.04] hover:z-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F5C542] ${photo.tiltClass}`}
+                  className={`hf-press hf-hover-scale group relative aspect-[3/4] sm:aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden border-[2.5px] sm:border-[3.5px] border-white bg-surface shadow-lg dark:shadow-[0_14px_32px_rgba(0,0,0,0.85)] transition-transform duration-300 hover:z-20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${photo.tiltClass}`}
                 >
                   {isFailed ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-[#101010] text-center">
-                      <Camera className="w-4 h-4 text-[#F5C542] mb-1" />
-                      <span className="text-[9px] sm:text-xs text-[#D0D0D0] leading-tight">
+                    <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-surface text-center">
+                      <Camera className="w-4 h-4 text-accent mb-1" />
+                      <span className="text-[9px] sm:text-xs text-ink-muted leading-tight">
                         {photo.caption}
                       </span>
                     </div>
@@ -238,7 +238,7 @@ export function LandingPage({
                       onError={() =>
                         setFailedGalleryIds((prev) => ({ ...prev, [photo.id]: true }))
                       }
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                      className="hf-group-scale w-full h-full object-cover object-center transition-transform duration-500"
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -266,7 +266,7 @@ export function LandingPage({
               type="button"
               disabled={connectingGoogle}
               onClick={onConnectGoogle}
-              className="w-full py-3.5 px-6 rounded-full bg-[#101010] border border-[#F5C542]/75 hover:border-[#F5C542] hover:bg-[#171717] text-[#FFFFFF] font-display font-semibold text-base flex items-center justify-center gap-3 active:scale-[0.99] transition-all disabled:opacity-50"
+              className="glass-btn w-full py-3.5 px-6 rounded-full border-accent/65 text-ink font-display font-semibold text-base flex items-center justify-center gap-3 disabled:opacity-50"
             >
               <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -295,16 +295,16 @@ export function LandingPage({
             <button
               type="button"
               onClick={onExploreCommunity}
-              className="flex-1 sm:flex-none px-5 py-3 rounded-full bg-[#101010] border border-white/20 hover:border-[#F5C542]/70 hover:bg-[#171717] text-[#FFFFFF] text-sm font-medium flex items-center justify-center gap-2.5 transition-all whitespace-nowrap"
+              className="glass-btn flex-1 sm:flex-none px-5 py-3 rounded-full text-ink text-sm font-medium flex items-center justify-center gap-2.5 whitespace-nowrap"
             >
-              <Compass className="w-4 h-4 text-[#F5C542] shrink-0" />
+              <Compass className="w-4 h-4 text-accent shrink-0" />
               <span>Explore Community</span>
             </button>
 
             <button
               type="button"
               onClick={onLogin}
-              className="px-5 py-3 text-sm sm:text-base font-semibold text-[#FFFFFF] hover:text-[#F5C542] transition-colors whitespace-nowrap shrink-0"
+              className="hf-press px-5 py-3 text-sm sm:text-base font-semibold text-ink hover:text-accent whitespace-nowrap shrink-0"
             >
               Sign In
             </button>
@@ -315,7 +315,7 @@ export function LandingPage({
             <button
               type="button"
               onClick={() => setShowDeveloperModal(true)}
-              className="px-5 py-2.5 rounded-full bg-[#101010]/90 border border-[#F5C542]/45 hover:border-[#F5C542] hover:bg-[#171717] text-[#F5C542] text-xs sm:text-sm font-semibold inline-flex items-center gap-2 transition-all active:scale-[0.98]"
+              className="glass-btn px-5 py-2.5 rounded-full border-accent/45 text-accent text-xs sm:text-sm font-semibold inline-flex items-center gap-2"
             >
               <User className="w-4 h-4 shrink-0" />
               <span>About Developer</span>
@@ -334,52 +334,52 @@ export function LandingPage({
                 loading="lazy"
                 className="w-full h-full object-cover object-[50%_42%] opacity-35 sepia saturate-[2.4] hue-rotate-[-8deg] brightness-75 contrast-125"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/30 to-[#050505]" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-transparent to-[#050505]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/30 to-canvas" />
+              <div className="absolute inset-0 bg-gradient-to-r from-canvas via-transparent to-canvas" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,197,66,0.18),transparent_68%)]" />
             </div>
           )}
 
           <div className="relative z-10 max-w-3xl mx-auto px-4 flex items-center justify-center gap-3 -mt-2">
-            <span className="hidden sm:block h-[1px] w-12 bg-gradient-to-r from-transparent to-[#F5C542]/60" />
-            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-[#F5C542] text-center">
+            <span className="hidden sm:block h-[1px] w-12 bg-gradient-to-r from-transparent to-accent/60" />
+            <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-accent text-center">
               BUILD FRIENDSHIPS • CREATE MEMORIES • GROW TOGETHER
             </p>
-            <span className="hidden sm:block h-[1px] w-12 bg-gradient-to-l from-transparent to-[#F5C542]/60" />
+            <span className="hidden sm:block h-[1px] w-12 bg-gradient-to-l from-transparent to-accent/60" />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-5 sm:px-8 py-12 flex flex-col gap-6 text-xs text-[#A1A1AA]">
+      <footer className="max-w-7xl mx-auto px-5 sm:px-8 py-12 flex flex-col gap-6 text-xs text-ink-muted">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <img
               src="/icons/icon-192.png"
               alt="Hostel Friend"
-              className="w-8 h-8 rounded-lg object-cover border border-white/15"
+              className="w-8 h-8 rounded-lg object-cover border border-hairline-strong"
             />
             <div>
-              <p className="font-display font-semibold text-sm text-[#FFFFFF]">
-                Hostel <span className="text-[#F5C542]">Friend</span>
+              <p className="font-display font-semibold text-sm text-ink">
+                Hostel <span className="text-accent">Friend</span>
               </p>
-              <p className="mt-0.5 text-[#D0D0D0]">Connect • Share • Discover</p>
+              <p className="mt-0.5 text-ink-muted">Connect • Share • Discover</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-6 text-[#D0D0D0]">
-            <button type="button" onClick={onExploreCommunity} className="hover:text-[#F5C542]">
+          <div className="flex flex-wrap items-center gap-6 text-ink-muted">
+            <button type="button" onClick={onExploreCommunity} className="hover:text-accent">
               Explore
             </button>
-            <button type="button" onClick={onCreateAccount} className="hover:text-[#F5C542]">
+            <button type="button" onClick={onCreateAccount} className="hover:text-accent">
               Create Account
             </button>
-            <button type="button" onClick={onLogin} className="hover:text-[#F5C542]">
+            <button type="button" onClick={onLogin} className="hover:text-accent">
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setShowDeveloperModal(true)}
-              className="hover:text-[#F5C542]"
+              className="hover:text-accent"
             >
               About Developer
             </button>
@@ -398,16 +398,16 @@ export function LandingPage({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#101010] border border-[#F5C542]/40 rounded-3xl p-5 sm:p-8 shadow-2xl"
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass-modal hf-modal-enter border-accent/40 rounded-3xl p-5 sm:p-8"
           >
-            <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-white/[0.08]">
+            <div className="flex items-start justify-between gap-4 pb-5 mb-6 border-b border-hairline">
               <div>
-                <p className="text-[11px] font-medium tracking-[0.14em] uppercase text-[#F5C542]">
+                <p className="text-[11px] font-medium tracking-[0.14em] uppercase text-accent">
                   Founder &amp; Creator
                 </p>
                 <h2
                   id="developer-modal-title"
-                  className="mt-1 font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#FFFFFF]"
+                  className="mt-1 font-display text-2xl sm:text-3xl font-bold tracking-tight text-ink"
                 >
                   About the Developer
                 </h2>
@@ -416,7 +416,7 @@ export function LandingPage({
                 type="button"
                 onClick={() => setShowDeveloperModal(false)}
                 aria-label="Close developer information"
-                className="w-9 h-9 rounded-full bg-[#050505] border border-white/15 hover:border-[#F5C542] text-[#FFFFFF] flex items-center justify-center shrink-0 transition-colors"
+                className="w-9 h-9 rounded-full bg-canvas border border-hairline-strong hover:border-accent text-ink flex items-center justify-center shrink-0 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -426,7 +426,7 @@ export function LandingPage({
               {/* Developer Identity Card */}
               <div className="lg:col-span-5 flex flex-col gap-5">
                 <div className="flex items-center gap-4">
-                  <div className="relative w-24 h-28 sm:w-28 sm:h-32 rounded-2xl overflow-hidden border border-[#F5C542]/45 bg-[#050505] shrink-0 shadow-lg">
+                  <div className="relative w-24 h-28 sm:w-28 sm:h-32 rounded-2xl overflow-hidden border border-accent/45 bg-canvas shrink-0 shadow-lg">
                     {!devImgFailed ? (
                       <img
                         src="/images/developer-bait-ullah.png"
@@ -435,9 +435,9 @@ export function LandingPage({
                         onError={() => setDevImgFailed(true)}
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C22] to-[#050505] text-[#F5C542]">
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-surface-hover to-canvas text-accent">
                         <span className="font-display text-2xl font-bold tracking-tight">BU</span>
-                        <span className="text-[10px] uppercase tracking-widest text-[#D0D0D0] mt-0.5">
+                        <span className="text-[10px] uppercase tracking-widest text-ink-muted mt-0.5">
                           Founder
                         </span>
                       </div>
@@ -445,44 +445,44 @@ export function LandingPage({
                   </div>
 
                   <div className="min-w-0">
-                    <h3 className="font-display text-xl sm:text-2xl font-bold text-[#FFFFFF]">
+                    <h3 className="font-display text-xl sm:text-2xl font-bold text-ink">
                       Bait Ullah
                     </h3>
-                    <p className="mt-1 text-xs font-semibold text-[#F5C542]">
+                    <p className="mt-1 text-xs font-semibold text-accent">
                       Founder &amp; Developer of Hostel Friend
                     </p>
-                    <p className="mt-1 text-xs text-[#D0D0D0]">Age: 19 years</p>
+                    <p className="mt-1 text-xs text-ink-muted">Age: 19 years</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 pt-4 border-t border-white/[0.06] text-xs">
-                  <div className="flex items-start gap-2.5 text-[#D0D0D0]">
-                    <GraduationCap className="w-4 h-4 text-[#F5C542] shrink-0 mt-0.5" />
+                <div className="grid grid-cols-1 gap-3 pt-4 border-t border-hairline text-xs">
+                  <div className="flex items-start gap-2.5 text-ink-muted">
+                    <GraduationCap className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[#A1A1AA] text-[11px] uppercase tracking-wider">Education</p>
-                      <p className="font-medium text-[#FFFFFF] mt-0.5">
+                      <p className="text-ink-muted text-[11px] uppercase tracking-wider">Education</p>
+                      <p className="font-medium text-ink mt-0.5">
                         First Year (FSc) · Islamia College Peshawar
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-2.5 text-[#D0D0D0]">
-                    <Building2 className="w-4 h-4 text-[#F5C542] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 text-ink-muted">
+                    <Building2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[#A1A1AA] text-[11px] uppercase tracking-wider">Hostel</p>
-                      <p className="font-medium text-[#FFFFFF] mt-0.5">
+                      <p className="text-ink-muted text-[11px] uppercase tracking-wider">Hostel</p>
+                      <p className="font-medium text-ink mt-0.5">
                         HST Haji Sahib Turangzai Hostel, Islamia College Peshawar
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-2.5 text-[#D0D0D0]">
-                    <MapPin className="w-4 h-4 text-[#F5C542] shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 text-ink-muted">
+                    <MapPin className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[#A1A1AA] text-[11px] uppercase tracking-wider">
+                      <p className="text-ink-muted text-[11px] uppercase tracking-wider">
                         Home District
                       </p>
-                      <p className="font-medium text-[#FFFFFF] mt-0.5">
+                      <p className="font-medium text-ink mt-0.5">
                         District Mohmand, Khyber Pakhtunkhwa, Pakistan
                       </p>
                     </div>
@@ -491,8 +491,8 @@ export function LandingPage({
               </div>
 
               {/* Biography, Vision, and WhatsApp Support */}
-              <div className="lg:col-span-7 flex flex-col justify-between gap-5 lg:border-l lg:border-white/[0.06] lg:pl-8">
-                <div className="space-y-3.5 text-sm text-[#D0D0D0] leading-relaxed">
+              <div className="lg:col-span-7 flex flex-col justify-between gap-5 lg:border-l lg:border-hairline lg:pl-8">
+                <div className="space-y-3.5 text-sm text-ink-muted leading-relaxed">
                   <p>
                     Meet Bait Ullah, the founder and creator of Hostel Friend, a student-driven
                     social networking platform designed to bring hostel communities closer.
@@ -516,14 +516,14 @@ export function LandingPage({
                 </div>
 
                 {/* Developer Vision */}
-                <div className="rounded-2xl border border-[#F5C542]/25 bg-[#050505]/90 p-4">
+                <div className="rounded-2xl border border-accent/25 bg-canvas/90 p-4">
                   <div className="flex items-start gap-3">
-                    <Quote className="w-5 h-5 text-[#F5C542] shrink-0 mt-0.5" />
+                    <Quote className="w-5 h-5 text-accent shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#F5C542]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
                         Developer Vision
                       </p>
-                      <p className="mt-1.5 text-sm font-medium text-[#FFFFFF] leading-relaxed">
+                      <p className="mt-1.5 text-sm font-medium text-ink leading-relaxed">
                         &ldquo;Connecting students, creating friendships, and preserving the
                         unforgettable memories of hostel life.&rdquo;
                       </p>
@@ -532,8 +532,8 @@ export function LandingPage({
                 </div>
 
                 {/* WhatsApp Contact Block */}
-                <div className="pt-3 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <p className="text-xs sm:text-sm text-[#D0D0D0] leading-relaxed">
+                <div className="pt-3 border-t border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <p className="text-xs sm:text-sm text-ink-muted leading-relaxed">
                     Have a question, need information, or want assistance with Hostel Friend? Contact
                     the developer directly on WhatsApp.
                   </p>
@@ -571,13 +571,13 @@ export function LandingPage({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative max-w-2xl w-full bg-[#101010] border border-[#F5C542]/40 rounded-2xl overflow-hidden shadow-2xl"
+            className="relative max-w-2xl w-full glass-modal hf-modal-enter border-accent/40 rounded-2xl overflow-hidden"
           >
             <button
               type="button"
               onClick={() => setLightboxPhoto(null)}
               aria-label="Close photo preview"
-              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/75 border border-white/20 text-white hover:border-[#F5C542] flex items-center justify-center"
+              className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-black/75 border border-white/20 text-white hover:border-accent flex items-center justify-center"
             >
               <X className="w-4 h-4" />
             </button>
@@ -585,11 +585,11 @@ export function LandingPage({
               src={lightboxPhoto.src}
               alt={lightboxPhoto.alt}
               referrerPolicy="no-referrer"
-              className="w-full max-h-[75vh] object-contain bg-[#050505]"
+              className="w-full max-h-[75vh] object-contain bg-canvas"
             />
-            <div className="p-4 border-t border-white/[0.08] flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-[#FFFFFF]">{lightboxPhoto.caption}</p>
-              <span className="text-[11px] text-[#F5C542] uppercase tracking-wider shrink-0">
+            <div className="p-4 border-t border-hairline flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-ink">{lightboxPhoto.caption}</p>
+              <span className="text-[11px] text-accent uppercase tracking-wider shrink-0">
                 Hostel Friend
               </span>
             </div>

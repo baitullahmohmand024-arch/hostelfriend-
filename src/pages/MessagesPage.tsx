@@ -364,39 +364,39 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
   }, [messages, profile?.uid]);
 
   return (
-    <div className="bg-[#151519] border border-white/[0.08] rounded-2xl overflow-hidden h-[calc(100vh-11rem)] md:h-[calc(100vh-5rem)] grid grid-cols-1 md:grid-cols-12">
+    <div className="glass-card rounded-2xl overflow-hidden h-[calc(100vh-11rem)] md:h-[calc(100vh-5rem)] grid grid-cols-1 md:grid-cols-12">
       {/* Left Conversation List */}
       <div
-        className={`md:col-span-4 border-r border-white/[0.08] flex flex-col min-h-0 ${
+        className={`md:col-span-4 border-r border-hairline flex flex-col min-h-0 ${
           selectedConv ? 'hidden md:flex' : 'flex'
         }`}
       >
-        <div className="p-4 border-b border-white/[0.06] space-y-3">
-          <h1 className="font-display text-lg font-bold text-[#F8F9FA]">Messages</h1>
+        <div className="p-4 border-b border-hairline space-y-3">
+          <h1 className="font-display text-lg font-bold text-ink-2">Messages</h1>
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-ink-subtle absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="search"
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
               placeholder="Start chat with @member..."
-              className="w-full rounded-xl bg-[#0A0A0C] border border-white/10 pl-9 pr-3 py-2 text-xs text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+              className="w-full rounded-xl bg-canvas-alt border border-hairline pl-9 pr-3 py-2 text-xs text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
             />
           </div>
 
           {matchingMembers.length > 0 && (
-            <div className="rounded-xl bg-[#0A0A0C] border border-white/10 divide-y divide-white/[0.06]">
+            <div className="rounded-xl glass-popover hf-popover-enter divide-y divide-hairline overflow-hidden">
               {matchingMembers.map((m) => (
                 <button
                   key={m.uid}
                   type="button"
                   onClick={() => handleStartChatWithMember(m)}
-                  className="w-full px-3 py-2.5 text-left flex items-center gap-2.5 hover:bg-white/[0.04]"
+                  className="w-full px-3 py-2.5 text-left flex items-center gap-2.5 hover:bg-hover-tint"
                 >
                   <Avatar src={m.avatarUrl} name={m.fullName} size="xs" />
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#F8F9FA] truncate">{m.fullName}</p>
-                    <p className="text-[11px] text-[#A1A1AA] truncate">@{m.username}</p>
+                    <p className="text-xs font-semibold text-ink-2 truncate">{m.fullName}</p>
+                    <p className="text-[11px] text-ink-muted truncate">@{m.username}</p>
                   </div>
                 </button>
               ))}
@@ -408,14 +408,14 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
           {loadingConvs ? (
             <div className="p-4 space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-14 rounded-xl bg-white/[0.04] animate-pulse" />
+                <div key={i} className="h-14 rounded-xl bg-hover-tint animate-pulse" />
               ))}
             </div>
           ) : conversations.length === 0 ? (
             <div className="p-8 text-center">
-              <MessageSquare className="w-7 h-7 text-[#D4AF37] mx-auto" />
-              <p className="mt-3 text-xs font-medium text-[#F8F9FA]">No conversations yet</p>
-              <p className="mt-1 text-[11px] text-[#71717A]">
+              <MessageSquare className="w-7 h-7 text-accent-strong mx-auto" />
+              <p className="mt-3 text-xs font-medium text-ink-2">No conversations yet</p>
+              <p className="mt-1 text-[11px] text-ink-subtle">
                 Search for a hostel member above or tap Message on their profile.
               </p>
             </div>
@@ -429,15 +429,15 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                   key={conv.id}
                   type="button"
                   onClick={() => setSelectedConv(conv)}
-                  className={`w-full px-4 py-3.5 text-left flex items-center gap-3 transition-colors ${
-                    isSelected ? 'bg-[#D4AF37]/10' : 'hover:bg-white/[0.03]'
+                  className={`w-full px-4 py-3.5 text-left flex items-center gap-3 hf-press ${
+                    isSelected ? 'bg-accent-strong/12' : 'hover:bg-hover-tint'
                   }`}
                 >
                   <Avatar src={other.avatar} name={other.name} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-[#F8F9FA] truncate">{other.name}</p>
-                      <span className="text-[11px] text-[#71717A] shrink-0">
+                      <p className="text-sm font-semibold text-ink-2 truncate">{other.name}</p>
+                      <span className="text-[11px] text-ink-subtle shrink-0">
                         {formatRelativeTime(conv.lastMessageAt)}
                       </span>
                     </div>
@@ -445,34 +445,34 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                       {isTyping ? (
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="inline-flex items-center gap-0.5 shrink-0" aria-hidden="true">
-                            <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:0ms]" />
-                            <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:150ms]" />
-                            <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:300ms]" />
+                            <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
+                            <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
+                            <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
                           </span>
-                          <p className="text-xs font-medium text-[#F5C542] truncate">typing...</p>
+                          <p className="text-xs font-medium text-accent truncate">typing...</p>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 min-w-0">
                           {conv.lastMessageText && profile && conv.lastMessageSenderId === profile.uid && (
                             (conv.participantAId === profile.uid ? conv.unreadByB : conv.unreadByA) === 0 ? (
                               <CheckCheck
-                                className="w-3.5 h-3.5 text-[#D4AF37] shrink-0"
+                                className="w-3.5 h-3.5 text-accent-strong shrink-0"
                                 aria-label="Seen"
                               />
                             ) : (
                               <Check
-                                className="w-3.5 h-3.5 text-[#71717A] shrink-0"
+                                className="w-3.5 h-3.5 text-ink-subtle shrink-0"
                                 aria-label="Sent"
                               />
                             )
                           )}
-                          <p className="text-xs text-[#A1A1AA] truncate">
+                          <p className="text-xs text-ink-muted truncate">
                             {conv.lastMessageText || `@${other.username}`}
                           </p>
                         </div>
                       )}
                       {other.unread > 0 && (
-                        <span className="font-mono text-[11px] font-semibold text-[#D4AF37] shrink-0">
+                        <span className="font-mono text-[11px] font-semibold text-accent-strong shrink-0">
                           {other.unread}
                         </span>
                       )}
@@ -493,13 +493,13 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
       >
         {selectedConv && activeOther ? (
           <>
-            <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center justify-between gap-3">
+            <div className="px-5 py-3.5 border-b border-hairline flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <button
                   type="button"
                   onClick={() => setSelectedConv(null)}
                   aria-label="Back to conversations"
-                  className="md:hidden p-1.5 rounded-lg text-[#A1A1AA] hover:text-[#F8F9FA]"
+                  className="md:hidden p-1.5 rounded-lg text-ink-muted hover:text-ink-2"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -510,29 +510,29 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                 >
                   <Avatar src={activeOther.avatar} name={activeOther.name} size="sm" />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#F8F9FA] group-hover:text-[#D4AF37] truncate">
+                    <p className="text-sm font-semibold text-ink-2 group-hover:text-accent-strong truncate">
                       {activeOther.name}
                     </p>
                     {isActiveOtherTyping ? (
-                      <p className="text-xs font-medium text-[#F5C542] flex items-center gap-1.5">
+                      <p className="text-xs font-medium text-accent flex items-center gap-1.5">
                         <span className="inline-flex items-center gap-0.5" aria-hidden="true">
-                          <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:0ms]" />
-                          <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:150ms]" />
-                          <span className="w-1 h-1 rounded-full bg-[#F5C542] animate-bounce [animation-delay:300ms]" />
+                          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
+                          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
+                          <span className="w-1 h-1 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
                         </span>
                         <span>typing...</span>
                       </p>
                     ) : (
-                      <p className="text-xs text-[#A1A1AA] truncate">@{activeOther.username}</p>
+                      <p className="text-xs text-ink-muted truncate">@{activeOther.username}</p>
                     )}
                   </div>
                 </button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-[#0A0A0C]/40">
+            <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-canvas-alt/40">
               {messages.length === 0 ? (
-                <p className="text-xs text-[#71717A] text-center py-10">
+                <p className="text-xs text-ink-subtle text-center py-10">
                   Say hello to @{activeOther.username}. Messages are private between you two.
                 </p>
               ) : (
@@ -548,20 +548,20 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                       <div
                         className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed break-words ${
                           mine
-                            ? 'bg-[#D4AF37] text-[#0A0A0C] font-medium'
-                            : 'bg-[#151519] border border-white/10 text-[#F8F9FA]'
+                            ? 'bg-accent-strong text-accent-fg font-medium'
+                            : 'bg-surface-2 border border-hairline text-ink-2'
                         }`}
                       >
                         {msg.text}
                       </div>
-                      <div className="mt-1 px-1 flex items-center gap-1.5 text-[10px] text-[#71717A]">
+                      <div className="mt-1 px-1 flex items-center gap-1.5 text-[10px] text-ink-subtle">
                         <span>
                           {msg.createdAt ? formatRelativeTime(msg.createdAt) : 'Sending...'}
                         </span>
                         {mine && msg.createdAt && (
                           msg.isRead ? (
                             <span
-                              className="inline-flex items-center gap-1 text-[#D4AF37]"
+                              className="inline-flex items-center gap-1 text-accent-strong"
                               title={
                                 msg.readAt
                                   ? `Seen ${formatRelativeTime(msg.readAt)}`
@@ -577,7 +577,7 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                             </span>
                           ) : (
                             <span
-                              className="inline-flex items-center gap-1 text-[#71717A]"
+                              className="inline-flex items-center gap-1 text-ink-subtle"
                               title="Sent"
                             >
                               <Check className="w-3.5 h-3.5" aria-label="Sent" />
@@ -592,11 +592,11 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
               )}
               {isActiveOtherTyping && (
                 <div className="flex items-start" role="status" aria-live="polite">
-                  <div className="rounded-2xl px-4 py-3 bg-[#151519] border border-[#F5C542]/25 flex items-center gap-2">
+                  <div className="rounded-2xl px-4 py-3 bg-surface-2 border border-accent/25 flex items-center gap-2">
                     <span className="inline-flex items-center gap-1" aria-hidden="true">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5C542] animate-bounce [animation-delay:0ms]" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5C542] animate-bounce [animation-delay:150ms]" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#F5C542] animate-bounce [animation-delay:300ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce [animation-delay:300ms]" />
                     </span>
                     <span className="sr-only">{activeOther.name} is typing</span>
                   </div>
@@ -607,7 +607,7 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
 
             <form
               onSubmit={handleSend}
-              className="p-4 border-t border-white/[0.06] flex items-center gap-2.5 bg-[#151519]"
+              className="p-4 border-t border-hairline flex items-center gap-2.5 bg-surface-2"
             >
               <input
                 type="text"
@@ -616,7 +616,7 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
                 onChange={(e) => handleMessageInputChange(e.target.value)}
                 onBlur={() => clearMyTyping()}
                 placeholder={`Message @${activeOther.username}...`}
-                className="flex-1 rounded-xl bg-[#0A0A0C] border border-white/10 px-4 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                className="flex-1 rounded-xl bg-canvas-alt border border-hairline px-4 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
               />
               <button
                 type="submit"
@@ -630,11 +630,11 @@ function isOtherTypingInConv(conv: Conversation, myUid: string | undefined, nowM
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <MessageSquare className="w-10 h-10 text-[#D4AF37]" />
-            <h2 className="mt-4 font-display text-lg font-semibold text-[#F8F9FA]">
+            <MessageSquare className="w-10 h-10 text-accent-strong" />
+            <h2 className="mt-4 font-display text-lg font-semibold text-ink-2">
               Private Hostel Messaging
             </h2>
-            <p className="mt-1.5 text-xs text-[#A1A1AA] max-w-sm">
+            <p className="mt-1.5 text-xs text-ink-muted max-w-sm">
               Select a conversation from the left or search for a member to start a direct chat.
             </p>
           </div>

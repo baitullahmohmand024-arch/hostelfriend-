@@ -54,6 +54,8 @@ export interface UploadResult {
   blob?: PutBlobResult;
 }
 
+export const MAX_VIDEO_CLIP_SECONDS = 10;
+
 export interface PreparedMedia {
   uploadFile: File;
   previewUrl: string;
@@ -67,6 +69,8 @@ export interface PreparedMedia {
   width: number;
   height: number;
   durationSeconds?: number;
+  originalDurationSeconds?: number;
+  wasTrimmed?: boolean;
   formatLabel: string;
   processingMs: number;
   wasCompressed: boolean;
@@ -600,21 +604,19 @@ export async function prepareImageForUpload(
   }
 }
 
-export async function prepareVideoForUpload(file: File): Promise<PreparedMedia> {
-  const startedAt = performance.now();
-  const mimeType = inferMimeType(file) || 'video/mp4';
-  const normalizedFile =
-    file.type === mimeType ? file : new File([file], file.name, { type: mimeType, lastModified: file.lastModified });
-  const previewUrl = URL.createObjectURL(normalizedFile);
-  const fingerprint = buildFileFingerprint(file);
+const VERIFIED_SHORT_VIDEO_FILES = new WeakSet<File>();
 
-  const meta = await new Promise<{
-    width: number;
-    height: number;
-    durationSeconds?: number;
-    thumbnailFile?: File;
-    thumbnailPreviewUrl?: string;
-  }>((resolve) => {
+async function extractVideoMetadataAndThumbnail(
+  file: File,
+  sourceUrl: string
+): Promise<{
+  width: number;
+  height: number;
+  durationSeconds?: number;
+  thumbnailFile?: File;
+  thumbnailPreviewUrl?: string;
+}> {
+  return new Promise((resolve) => {
     const video = document.createElement('video');
     video.preload = 'metadata';
     video.muted = true;
@@ -639,14 +641,15 @@ export async function prepareVideoForUpload(file: File): Promise<PreparedMedia> 
 
     const timeoutId = setTimeout(() => {
       finish({ width: 0, height: 0 });
-    }, 4000);
+    }, 5000);
 
     video.onerror = () => finish({ width: 0, height: 0 });
 
     video.onloadedmetadata = () => {
       const vw = video.videoWidth || 0;
       const vh = video.videoHeight || 0;
-      const duration = Number.isFinite(video.duration) ? video.duration : undefined;
+      const duration =
+        Number.isFinite(video.duration) && video.duration > 0 ? video.duration : undefined;
       if (!vw || !vh) {
         finish({ width: vw, height: vh, durationSeconds: duration });
         return;
@@ -662,7 +665,8 @@ export async function prepareVideoForUpload(file: File): Promise<PreparedMedia> 
     video.onseeked = async () => {
       const vw = video.videoWidth || 0;
       const vh = video.videoHeight || 0;
-      const duration = Number.isFinite(video.duration) ? video.duration : undefined;
+      const duration =
+        Number.isFinite(video.duration) && video.duration > 0 ? video.duration : undefined;
       try {
         const maxThumbDim = 640;
         const scale = Math.max(vw, vh) > maxThumbDim ? maxThumbDim / Math.max(vw, vh) : 1;
@@ -705,26 +709,485 @@ export async function prepareVideoForUpload(file: File): Promise<PreparedMedia> 
       }
     };
 
-    video.src = previewUrl;
+    video.src = sourceUrl;
   });
+}
 
-  const extLabel = (mimeType.split('/')[1] || 'MP4').replace('quicktime', 'MOV').toUpperCase();
+function pickSupportedRecorderMime(): { recorderMime: string; baseMime: string; ext: string } | null {
+  if (typeof MediaRecorder === 'undefined') return null;
+  const candidates = [
+    { recorderMime: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', baseMime: 'video/mp4', ext: 'mp4' },
+    { recorderMime: 'video/mp4;codecs=avc1', baseMime: 'video/mp4', ext: 'mp4' },
+    { recorderMime: 'video/mp4', baseMime: 'video/mp4', ext: 'mp4' },
+    { recorderMime: 'video/webm;codecs=vp9,opus', baseMime: 'video/webm', ext: 'webm' },
+    { recorderMime: 'video/webm;codecs=vp8,opus', baseMime: 'video/webm', ext: 'webm' },
+    { recorderMime: 'video/webm;codecs=vp8', baseMime: 'video/webm', ext: 'webm' },
+    { recorderMime: 'video/webm', baseMime: 'video/webm', ext: 'webm' },
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      if (
+        typeof MediaRecorder.isTypeSupported !== 'function' ||
+        MediaRecorder.isTypeSupported(candidate.recorderMime)
+      ) {
+        return candidate;
+      }
+    } catch {
+      // try next mime candidate
+    }
+  }
+  return null;
+}
+
+async function trimVideoToFirstSeconds(
+  file: File,
+  sourceUrl: string,
+  width: number,
+  height: number,
+  maxSeconds: number,
+  onProgress?: (percent: number, label: string) => void,
+  signal?: AbortSignal
+): Promise<{ trimmedFile: File; recordedSeconds: number; width: number; height: number }> {
+  if (signal?.aborted) {
+    throw new UploadCancelledError('Video trimming was cancelled.');
+  }
+
+  const chosen = pickSupportedRecorderMime();
+  if (!chosen) {
+    throw new Error(
+      `Your browser cannot automatically trim videos over ${maxSeconds}s. Please select a clip that is ${maxSeconds} seconds or shorter.`
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.crossOrigin = 'anonymous';
+
+    const maxDim = 960;
+    const rawW = width > 0 ? width : 720;
+    const rawH = height > 0 ? height : 1280;
+    const scale = Math.max(rawW, rawH) > maxDim ? maxDim / Math.max(rawW, rawH) : 1;
+    const targetW = Math.max(2, Math.floor((rawW * scale) / 2) * 2);
+    const targetH = Math.max(2, Math.floor((rawH * scale) / 2) * 2);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      reject(new Error('Could not initialize video trimmer canvas.'));
+      return;
+    }
+
+    let settled = false;
+    let drawTimer: number | null = null;
+    let hardTimeout: number | null = null;
+    let recorder: MediaRecorder | null = null;
+    let audioCtx: AudioContext | null = null;
+    let combinedStream: MediaStream | null = null;
+    const chunks: BlobPart[] = [];
+    let playStartedAt = 0;
+    let lastVideoTime = 0;
+
+    const cleanup = () => {
+      if (drawTimer !== null) {
+        window.clearInterval(drawTimer);
+        drawTimer = null;
+      }
+      if (hardTimeout !== null) {
+        window.clearTimeout(hardTimeout);
+        hardTimeout = null;
+      }
+      signal?.removeEventListener('abort', onAbort);
+      try {
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      } catch {
+        // ignore
+      }
+      if (combinedStream) {
+        combinedStream.getTracks().forEach((t) => {
+          try {
+            t.stop();
+          } catch {
+            // ignore
+          }
+        });
+        combinedStream = null;
+      }
+      if (audioCtx) {
+        void audioCtx.close().catch(() => {});
+        audioCtx = null;
+      }
+      canvas.width = 0;
+      canvas.height = 0;
+    };
+
+    const fail = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(err);
+    };
+
+    const stopRecordingSafely = () => {
+      if (drawTimer !== null) {
+        window.clearInterval(drawTimer);
+        drawTimer = null;
+      }
+      try {
+        video.pause();
+      } catch {
+        // ignore
+      }
+      if (recorder && recorder.state !== 'inactive') {
+        try {
+          recorder.stop();
+        } catch {
+          fail(new Error('Failed to finalize 10-second clip.'));
+        }
+      }
+    };
+
+    const onAbort = () => {
+      if (recorder && recorder.state !== 'inactive') {
+        try {
+          recorder.ondataavailable = null;
+          recorder.onstop = null;
+          recorder.stop();
+        } catch {
+          // ignore
+        }
+      }
+      fail(new UploadCancelledError('Video trimming was cancelled.'));
+    };
+
+    signal?.addEventListener('abort', onAbort, { once: true });
+
+    video.onerror = () => {
+      fail(new Error('Could not decode this video for automatic 10-second clipping.'));
+    };
+
+    const beginCapture = async () => {
+      try {
+        const vw = video.videoWidth || targetW;
+        const vh = video.videoHeight || targetH;
+        const adjScale = Math.max(vw, vh) > maxDim ? maxDim / Math.max(vw, vh) : 1;
+        const finalW = Math.max(2, Math.floor((vw * adjScale) / 2) * 2);
+        const finalH = Math.max(2, Math.floor((vh * adjScale) / 2) * 2);
+        canvas.width = finalW;
+        canvas.height = finalH;
+
+        ctx.drawImage(video, 0, 0, finalW, finalH);
+
+        const canvasCaptureFn = (
+          canvas as HTMLCanvasElement & { captureStream?: (fps?: number) => MediaStream }
+        ).captureStream;
+        if (typeof canvasCaptureFn !== 'function') {
+          fail(
+            new Error(
+              `This browser does not support automatic ${maxSeconds}s video clipping. Please choose a clip of ${maxSeconds}s or less.`
+            )
+          );
+          return;
+        }
+
+        const videoStream = canvasCaptureFn.call(canvas, 30);
+        const tracks: MediaStreamTrack[] = [...videoStream.getVideoTracks()];
+
+        // Capture audio silently via AudioContext so the clip keeps its audio without playing out loud
+        try {
+          const AudioCtx =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+          if (AudioCtx) {
+            audioCtx = new AudioCtx();
+            if (audioCtx.state === 'suspended') {
+              await audioCtx.resume().catch(() => {});
+            }
+            const sourceNode = audioCtx.createMediaElementSource(video);
+            const destNode = audioCtx.createMediaStreamDestination();
+            sourceNode.connect(destNode);
+            video.muted = false;
+            video.volume = 1;
+            destNode.stream.getAudioTracks().forEach((t) => tracks.push(t));
+          } else {
+            video.muted = true;
+          }
+        } catch {
+          video.muted = true;
+          if (audioCtx) {
+            void audioCtx.close().catch(() => {});
+            audioCtx = null;
+          }
+        }
+
+        combinedStream = new MediaStream(tracks);
+
+        try {
+          recorder = new MediaRecorder(combinedStream, {
+            mimeType: chosen.recorderMime,
+            videoBitsPerSecond: 1_800_000,
+            audioBitsPerSecond: 96_000,
+          });
+        } catch {
+          try {
+            recorder = new MediaRecorder(combinedStream, { mimeType: chosen.recorderMime });
+          } catch {
+            recorder = new MediaRecorder(combinedStream);
+          }
+        }
+
+        recorder.ondataavailable = (evt) => {
+          if (evt.data && evt.data.size > 0) {
+            chunks.push(evt.data);
+          }
+        };
+
+        recorder.onerror = () => {
+          fail(new Error('An error occurred while cutting the first 10 seconds of the video.'));
+        };
+
+        recorder.onstop = () => {
+          if (settled) return;
+          if (signal?.aborted) {
+            fail(new UploadCancelledError('Video trimming was cancelled.'));
+            return;
+          }
+          const blob = new Blob(chunks, { type: chosen.baseMime });
+          if (blob.size <= 0) {
+            fail(new Error('Could not generate the 10-second trimmed video clip.'));
+            return;
+          }
+          const clippedName = replaceFileExtension(file.name, chosen.ext);
+          const trimmedFile = new File([blob], clippedName, {
+            type: chosen.baseMime,
+            lastModified: Date.now(),
+          });
+          VERIFIED_SHORT_VIDEO_FILES.add(trimmedFile);
+          const recordedSeconds = Math.min(
+            maxSeconds,
+            Math.max(0.5, Number((lastVideoTime || maxSeconds).toFixed(2)))
+          );
+          settled = true;
+          onProgress?.(100, `First ${maxSeconds}s clip ready`);
+          cleanup();
+          resolve({ trimmedFile, recordedSeconds, width: finalW, height: finalH });
+        };
+
+        onProgress?.(1, `Cutting first ${maxSeconds}s clip...`);
+        recorder.start(250);
+
+        try {
+          await video.play();
+        } catch {
+          // If browser blocks unmuted autoplay, mute cleanly and retry video-only capture
+          video.muted = true;
+          await video.play();
+        }
+
+        playStartedAt = performance.now();
+        hardTimeout = window.setTimeout(() => {
+          stopRecordingSafely();
+        }, (maxSeconds + 2.5) * 1000);
+
+        drawTimer = window.setInterval(() => {
+          if (settled) return;
+          if (signal?.aborted) {
+            onAbort();
+            return;
+          }
+          if (video.readyState >= 2) {
+            ctx.drawImage(video, 0, 0, finalW, finalH);
+          }
+          const mediaElapsed = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+          const wallElapsed = (performance.now() - playStartedAt) / 1000;
+          lastVideoTime = Math.max(lastVideoTime, Math.min(maxSeconds, mediaElapsed || wallElapsed));
+          const pct = Math.min(99, Math.max(1, Math.round((lastVideoTime / maxSeconds) * 100)));
+          onProgress?.(pct, `Cutting first ${maxSeconds}s clip... ${pct}%`);
+
+          if (mediaElapsed >= maxSeconds - 0.04 || video.ended || wallElapsed >= maxSeconds + 1.2) {
+            stopRecordingSafely();
+          }
+        }, 33);
+      } catch (err) {
+        fail(
+          err instanceof Error
+            ? err
+            : new Error('Unable to cut the first 10 seconds from this video.')
+        );
+      }
+    };
+
+    video.onloadeddata = () => {
+      if (settled) return;
+      try {
+        if (Math.abs(video.currentTime) > 0.05) {
+          video.onseeked = () => {
+            video.onseeked = null;
+            void beginCapture();
+          };
+          video.currentTime = 0;
+        } else {
+          void beginCapture();
+        }
+      } catch {
+        void beginCapture();
+      }
+    };
+
+    video.src = sourceUrl;
+  });
+}
+
+async function readVideoDurationQuick(file: File): Promise<number | null> {
+  if (VERIFIED_SHORT_VIDEO_FILES.has(file)) return null;
+  if (typeof document === 'undefined' || typeof URL === 'undefined') return null;
+  const tempUrl = URL.createObjectURL(file);
+  try {
+    return await new Promise<number | null>((resolve) => {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.muted = true;
+      let done = false;
+      const finish = (dur: number | null) => {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        v.removeAttribute('src');
+        v.load();
+        resolve(dur);
+      };
+      const t = setTimeout(() => finish(null), 2500);
+      v.onloadedmetadata = () => {
+        finish(Number.isFinite(v.duration) && v.duration > 0 ? v.duration : null);
+      };
+      v.onerror = () => finish(null);
+      v.src = tempUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(tempUrl);
+  }
+}
+
+export async function prepareVideoForUpload(
+  file: File,
+  options: {
+    maxDurationSeconds?: number;
+    onProgress?: (percent: number, label: string) => void;
+    signal?: AbortSignal;
+  } = {}
+): Promise<PreparedMedia> {
+  const startedAt = performance.now();
+  const maxDurationSeconds = options.maxDurationSeconds ?? MAX_VIDEO_CLIP_SECONDS;
+  const mimeType = inferMimeType(file) || 'video/mp4';
+  const normalizedFile =
+    file.type === mimeType
+      ? file
+      : new File([file], file.name, { type: mimeType, lastModified: file.lastModified });
+  let previewUrl = URL.createObjectURL(normalizedFile);
+  const fingerprint = buildFileFingerprint(file);
+
+  if (options.signal?.aborted) {
+    URL.revokeObjectURL(previewUrl);
+    throw new UploadCancelledError('Video preparation cancelled.');
+  }
+
+  options.onProgress?.(5, 'Inspecting video duration...');
+  const initialMeta = await extractVideoMetadataAndThumbnail(normalizedFile, previewUrl);
+
+  if (options.signal?.aborted) {
+    URL.revokeObjectURL(previewUrl);
+    if (initialMeta.thumbnailPreviewUrl) URL.revokeObjectURL(initialMeta.thumbnailPreviewUrl);
+    throw new UploadCancelledError('Video preparation cancelled.');
+  }
+
+  const originalDuration = initialMeta.durationSeconds;
+  const needsTrim =
+    originalDuration === undefined || originalDuration > maxDurationSeconds + 0.05;
+
+  if (!needsTrim) {
+    VERIFIED_SHORT_VIDEO_FILES.add(normalizedFile);
+    const extLabel = (mimeType.split('/')[1] || 'MP4').replace('quicktime', 'MOV').toUpperCase();
+    return {
+      uploadFile: normalizedFile,
+      previewUrl,
+      thumbnailFile: initialMeta.thumbnailFile,
+      thumbnailPreviewUrl: initialMeta.thumbnailPreviewUrl,
+      mediaType: 'video',
+      suggestedAspectRatio: suggestAspectRatio(initialMeta.width, initialMeta.height, 'video'),
+      originalSize: file.size,
+      optimizedSize: normalizedFile.size,
+      width: initialMeta.width,
+      height: initialMeta.height,
+      durationSeconds: originalDuration,
+      originalDurationSeconds: originalDuration,
+      wasTrimmed: false,
+      formatLabel: extLabel,
+      processingMs: Math.round(performance.now() - startedAt),
+      wasCompressed: false,
+      fingerprint,
+    };
+  }
+
+  // Video exceeds 10 seconds (or duration is unknown): automatically cut ONLY the first 10 seconds!
+  let trimmedResult: {
+    trimmedFile: File;
+    recordedSeconds: number;
+    width: number;
+    height: number;
+  };
+  try {
+    trimmedResult = await trimVideoToFirstSeconds(
+      normalizedFile,
+      previewUrl,
+      initialMeta.width,
+      initialMeta.height,
+      maxDurationSeconds,
+      options.onProgress,
+      options.signal
+    );
+  } catch (err) {
+    URL.revokeObjectURL(previewUrl);
+    if (initialMeta.thumbnailPreviewUrl) URL.revokeObjectURL(initialMeta.thumbnailPreviewUrl);
+    throw err;
+  }
+
+  URL.revokeObjectURL(previewUrl);
+  previewUrl = URL.createObjectURL(trimmedResult.trimmedFile);
+
+  let thumbFile = initialMeta.thumbnailFile;
+  let thumbPreviewUrl = initialMeta.thumbnailPreviewUrl;
+  if (!thumbFile) {
+    const trimmedMeta = await extractVideoMetadataAndThumbnail(trimmedResult.trimmedFile, previewUrl);
+    thumbFile = trimmedMeta.thumbnailFile;
+    thumbPreviewUrl = trimmedMeta.thumbnailPreviewUrl;
+  }
+
+  const trimmedMime = inferMimeType(trimmedResult.trimmedFile) || 'video/mp4';
+  const extLabel = (trimmedMime.split('/')[1] || 'MP4').replace('quicktime', 'MOV').toUpperCase();
 
   return {
-    uploadFile: normalizedFile,
+    uploadFile: trimmedResult.trimmedFile,
     previewUrl,
-    thumbnailFile: meta.thumbnailFile,
-    thumbnailPreviewUrl: meta.thumbnailPreviewUrl,
+    thumbnailFile: thumbFile,
+    thumbnailPreviewUrl: thumbPreviewUrl,
     mediaType: 'video',
-    suggestedAspectRatio: suggestAspectRatio(meta.width, meta.height, 'video'),
+    suggestedAspectRatio: suggestAspectRatio(trimmedResult.width, trimmedResult.height, 'video'),
     originalSize: file.size,
-    optimizedSize: normalizedFile.size,
-    width: meta.width,
-    height: meta.height,
-    durationSeconds: meta.durationSeconds,
+    optimizedSize: trimmedResult.trimmedFile.size,
+    width: trimmedResult.width,
+    height: trimmedResult.height,
+    durationSeconds: trimmedResult.recordedSeconds,
+    originalDurationSeconds: originalDuration,
+    wasTrimmed: true,
     formatLabel: extLabel,
     processingMs: Math.round(performance.now() - startedAt),
-    wasCompressed: false,
+    wasCompressed: trimmedResult.trimmedFile.size < file.size,
     fingerprint,
   };
 }
@@ -736,11 +1199,18 @@ export async function prepareMediaForUpload(
     quality?: number;
     folder?: UploadFolder;
     precomputeDirectDataUrl?: boolean;
+    maxVideoDurationSeconds?: number;
+    onVideoProgress?: (percent: number, label: string) => void;
+    signal?: AbortSignal;
   } = {}
 ): Promise<PreparedMedia> {
   const mimeType = inferMimeType(file);
   if (ALLOWED_VIDEO_TYPES.includes(mimeType)) {
-    return prepareVideoForUpload(file);
+    return prepareVideoForUpload(file, {
+      maxDurationSeconds: options.maxVideoDurationSeconds ?? MAX_VIDEO_CLIP_SECONDS,
+      onProgress: options.onVideoProgress,
+      signal: options.signal,
+    });
   }
   return prepareImageForUpload(file, options);
 }
@@ -1065,6 +1535,15 @@ export function startResumableUpload(options: {
     const storagePath = `${folder}/${userId}/${uniqueId}_${safeName}`;
     const contentType = inferMimeType(file) || 'application/octet-stream';
     const overallStartedAt = performance.now();
+
+    if (contentType.startsWith('video/')) {
+      const checkedDuration = await readVideoDurationQuick(file);
+      if (checkedDuration !== null && checkedDuration > MAX_VIDEO_CLIP_SECONDS + 0.6) {
+        throw new Error(
+          `Only clips up to ${MAX_VIDEO_CLIP_SECONDS} seconds can be uploaded. Please re-select the video so the first ${MAX_VIDEO_CLIP_SECONDS}s clip can be prepared.`
+        );
+      }
+    }
 
     const uploadViaServerMedia = (): Promise<
       { ok: true; result: UploadResult } | { ok: false; fallback: boolean; error?: Error }

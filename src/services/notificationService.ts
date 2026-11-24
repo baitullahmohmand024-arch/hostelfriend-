@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentData,
   DocumentSnapshot,
   getDoc,
   getDocs,
@@ -9,6 +10,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  QuerySnapshot,
   serverTimestamp,
   setDoc,
   startAfter,
@@ -355,6 +357,10 @@ export async function clearAllNotifications(items: NotificationItem[]): Promise<
   }
 }
 
+export const APP_NOTIFICATION_SENDER_NAME = 'Hostel Friend';
+export const APP_NOTIFICATION_SENDER_USERNAME = 'hostelfriend';
+export const APP_NOTIFICATION_LOGO_URL = '/icons/icon-192.png';
+
 export async function sendAdminAnnouncement(params: {
   adminProfile: UserProfile;
   title: string;
@@ -367,12 +373,32 @@ export async function sendAdminAnnouncement(params: {
   }
 
   try {
-    const usersSnap = await getDocs(query(collection(db, 'users'), limit(100)));
-    const recipients = usersSnap.docs
-      .map((d) => d.data() as UserProfile)
-      .filter((u) => !u.isSuspended && u.uid !== params.adminProfile.uid);
+    const allUsers: UserProfile[] = [];
+    let cursor: DocumentSnapshot<DocumentData> | null = null;
+    for (let page = 0; page < 5; page++) {
+      const usersSnap: QuerySnapshot<DocumentData> = cursor
+        ? await getDocs(query(collection(db, 'users'), startAfter(cursor), limit(100)))
+        : await getDocs(query(collection(db, 'users'), limit(100)));
+      if (usersSnap.empty) break;
+      for (const docSnap of usersSnap.docs) {
+        allUsers.push(docSnap.data() as UserProfile);
+      }
+      if (usersSnap.docs.length < 100) break;
+      cursor = usersSnap.docs[usersSnap.docs.length - 1];
+    }
+
+    const recipients = allUsers.filter(
+      (u) => !u.isSuspended && u.uid !== params.adminProfile.uid
+    );
 
     if (recipients.length === 0) return 0;
+
+    const appActor: UserProfile = {
+      ...params.adminProfile,
+      fullName: APP_NOTIFICATION_SENDER_NAME,
+      username: APP_NOTIFICATION_SENDER_USERNAME,
+      avatarUrl: APP_NOTIFICATION_LOGO_URL,
+    };
 
     const chunkSize = 400;
     for (let i = 0; i < recipients.length; i += chunkSize) {
@@ -381,7 +407,7 @@ export async function sendAdminAnnouncement(params: {
         const notifRef = doc(collection(db, 'notifications'));
         const payload = buildNotificationPayload(notifRef.id, {
           recipientId: recipient.uid,
-          actor: params.adminProfile,
+          actor: appActor,
           type: 'IMPORTANT_APP_ANNOUNCEMENT',
           title: cleanTitle,
           body: cleanBody,

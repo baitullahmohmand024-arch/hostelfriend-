@@ -45,8 +45,49 @@ export interface StoryItem {
   mediaType: 'image' | 'video';
   caption: string;
   visibility: 'public';
+  likesCount?: number;
   createdAt: Timestamp | null;
   expiresAt: Timestamp | null;
+}
+
+export interface StoryLike {
+  id: string;
+  storyId: string;
+  storyAuthorId: string;
+  userId: string;
+  userUsername: string;
+  userName: string;
+  userAvatarUrl: string;
+  createdAt: Timestamp | null;
+}
+
+export interface Poll {
+  id: string;
+  authorId: string;
+  authorUsername: string;
+  authorName: string;
+  authorAvatarUrl: string;
+  question: string;
+  options: string[];
+  count0: number;
+  count1: number;
+  count2: number;
+  count3: number;
+  count4: number;
+  count5: number;
+  totalVotes: number;
+  visibility: 'public';
+  storageMode?: 'polls' | 'legacy-post';
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+export interface PollVote {
+  id: string;
+  pollId: string;
+  userId: string;
+  optionIndex: number;
+  createdAt: Timestamp | null;
 }
 
 export interface UserPrivateSettings {
@@ -59,6 +100,22 @@ export interface UserPrivateSettings {
   notifyMessages: boolean;
   blockedUserIds: string[];
   updatedAt: Timestamp | null;
+}
+
+export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'care';
+
+export type ReactionCounts = Partial<Record<ReactionType, number>>;
+
+export interface PostReaction {
+  id: string;
+  postId: string;
+  userId: string;
+  reactionType: ReactionType;
+  userUsername?: string;
+  userName?: string;
+  userAvatarUrl?: string;
+  createdAt: Timestamp | null;
+  updatedAt?: Timestamp | null;
 }
 
 export interface Post {
@@ -75,6 +132,7 @@ export interface Post {
   hashtags: string[];
   visibility: 'public';
   likesCount: number;
+  reactionCounts?: ReactionCounts;
   commentsCount: number;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;

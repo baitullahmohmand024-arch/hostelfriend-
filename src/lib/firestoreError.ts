@@ -82,3 +82,23 @@ export function formatUserFriendlyError(
 
   return raw || fallback;
 }
+
+export function isPermissionDeniedError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const code = (error as { code?: unknown }).code;
+  if (code === 'permission-denied' || code === 'firestore/permission-denied') {
+    return true;
+  }
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof (error as { message?: unknown }).message === 'string'
+        ? String((error as { message?: unknown }).message)
+        : '';
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('missing or insufficient permissions') ||
+    lower.includes('permission-denied') ||
+    lower.includes('permission denied')
+  );
+}

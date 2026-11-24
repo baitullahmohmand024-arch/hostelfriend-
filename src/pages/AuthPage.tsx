@@ -352,17 +352,17 @@ export function AuthPage({
   // Email Verification Gate
   if (needsVerification && firebaseUser) {
     return (
-      <div className="min-h-screen bg-[#0A0A0C] flex items-center justify-center p-4">
-        <div className="glass-surface w-full max-w-md rounded-2xl p-7 border border-white/10">
-          <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4">
+        <div className="glass-surface w-full max-w-md rounded-2xl p-7 border border-hairline">
+          <div className="w-11 h-11 rounded-xl bg-accent-strong/15 border border-accent-strong/30 flex items-center justify-center text-accent-strong">
             <Mail className="w-5 h-5" />
           </div>
-          <h1 className="mt-5 font-display text-2xl font-bold text-[#F8F9FA]">
+          <h1 className="mt-5 font-display text-2xl font-bold text-ink-2">
             Verify your email
           </h1>
-          <p className="mt-2 text-sm text-[#A1A1AA] leading-relaxed">
+          <p className="mt-2 text-sm text-ink-muted leading-relaxed">
             We sent a verification link to{' '}
-            <span className="text-[#F8F9FA] font-medium">{firebaseUser.email}</span>. Click the
+            <span className="text-ink-2 font-medium">{firebaseUser.email}</span>. Click the
             link in your inbox, then tap Continue below.
           </p>
 
@@ -372,7 +372,7 @@ export function AuthPage({
             </div>
           )}
           {successMsg && (
-            <div className="mt-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 p-3 text-xs text-[#E7C96F]">
+            <div className="mt-4 rounded-xl bg-accent-strong/10 border border-accent-strong/30 p-3 text-xs text-accent-soft">
               {successMsg}
             </div>
           )}
@@ -416,7 +416,7 @@ export function AuthPage({
                   setLoading(false);
                 }
               }}
-              className="w-full py-2.5 px-4 rounded-xl text-sm font-medium border border-white/10 text-[#F8F9FA] hover:bg-white/[0.04]"
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-medium border border-hairline text-ink-2 hover:bg-hover-tint"
             >
               Resend Verification Email
             </button>
@@ -424,7 +424,7 @@ export function AuthPage({
             <button
               type="button"
               onClick={logout}
-              className="w-full py-2 text-xs text-[#A1A1AA] hover:text-[#F8F9FA]"
+              className="w-full py-2 text-xs text-ink-muted hover:text-ink-2"
             >
               Use a different account
             </button>
@@ -437,19 +437,19 @@ export function AuthPage({
   // Profile Onboarding for newly verified or Google users
   if (needsOnboarding && firebaseUser) {
     return (
-      <div className="min-h-screen bg-[#0A0A0C] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4">
         <form
           onSubmit={handleOnboardingSubmit}
-          className="glass-surface w-full max-w-md rounded-2xl p-7 border border-white/10"
+          className="glass-surface w-full max-w-md rounded-2xl p-7 border border-hairline"
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <img
                 src="/icons/icon-192.png"
                 alt="Hostel Friend"
-                className="w-7 h-7 rounded-lg object-cover border border-white/15 shrink-0"
+                className="w-7 h-7 rounded-lg object-cover border border-hairline-strong shrink-0"
               />
-              <span className="font-display font-bold text-base sm:text-lg text-[#F8F9FA] whitespace-nowrap">
+              <span className="font-display font-bold text-base sm:text-lg text-ink-2 whitespace-nowrap">
                 Hostel Friend
               </span>
             </div>
@@ -458,50 +458,50 @@ export function AuthPage({
                 type="button"
                 disabled={loading}
                 onClick={handleGoogleSignIn}
-                className="text-xs text-[#D4AF37] hover:text-[#E7C96F] disabled:opacity-50"
+                className="text-xs text-accent-strong hover:text-accent-soft disabled:opacity-50"
               >
                 Switch Google
               </button>
               <button
                 type="button"
                 onClick={logout}
-                className="text-xs text-[#A1A1AA] hover:text-[#F8F9FA]"
+                className="text-xs text-ink-muted hover:text-ink-2"
               >
                 Sign out
               </button>
             </div>
           </div>
 
-          <div className="mt-5 rounded-xl bg-[#0A0A0C] border border-[#D4AF37]/30 p-3 flex items-center gap-3">
+          <div className="mt-5 rounded-xl bg-canvas-alt border border-accent-strong/30 p-3 flex items-center gap-3">
             {firebaseUser.photoURL ? (
               <img
                 src={firebaseUser.photoURL}
                 alt={firebaseUser.displayName || 'Connected account'}
                 referrerPolicy="no-referrer"
-                className="w-9 h-9 rounded-full object-cover border border-[#D4AF37]/40 shrink-0"
+                className="w-9 h-9 rounded-full object-cover border border-accent-strong/40 shrink-0"
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center text-xs font-bold text-[#D4AF37] shrink-0">
+              <div className="w-9 h-9 rounded-full bg-accent-strong/15 border border-accent-strong/40 flex items-center justify-center text-xs font-bold text-accent-strong shrink-0">
                 {(firebaseUser.displayName || firebaseUser.email || 'H').charAt(0).toUpperCase()}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-[#F8F9FA] truncate">
+              <p className="text-xs font-semibold text-ink-2 truncate">
                 {firebaseUser.displayName || 'Account Connected'}
               </p>
-              <p className="text-[11px] text-[#A1A1AA] truncate">
+              <p className="text-[11px] text-ink-muted truncate">
                 {firebaseUser.email || 'Verified Member'}
               </p>
             </div>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#D4AF37] shrink-0">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-strong shrink-0">
               <CheckCircle2 className="w-3.5 h-3.5" /> Connected
             </span>
           </div>
 
-          <h1 className="mt-5 font-display text-2xl font-bold text-[#F8F9FA]">
+          <h1 className="mt-5 font-display text-2xl font-bold text-ink-2">
             Start Account Setup
           </h1>
-          <p className="mt-1.5 text-sm text-[#A1A1AA]">
+          <p className="mt-1.5 text-sm text-ink-muted">
             Confirm your unique handle and hostel so peers can discover and connect with you.
           </p>
 
@@ -512,7 +512,7 @@ export function AuthPage({
           )}
 
           <div className="mt-5 space-y-4">
-            <label className="block text-xs font-medium text-[#A1A1AA]">
+            <label className="block text-xs font-medium text-ink-muted">
               Full Name
               <input
                 type="text"
@@ -521,11 +521,11 @@ export function AuthPage({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Aarav Mehta"
-                className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+                className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
               />
             </label>
 
-            <label className="block text-xs font-medium text-[#A1A1AA]">
+            <label className="block text-xs font-medium text-ink-muted">
               Username
               <div className="relative mt-1.5">
                 <input
@@ -536,10 +536,10 @@ export function AuthPage({
                   value={username}
                   onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
                   placeholder="aarav_studio"
-                  className="w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+                  className="w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
                 />
                 {usernameStatus === 'available' && (
-                  <span className="mt-1 block text-[11px] text-[#D4AF37]">
+                  <span className="mt-1 block text-[11px] text-accent-strong">
                     @{sanitizeUsername(username)} is available
                   </span>
                 )}
@@ -551,7 +551,7 @@ export function AuthPage({
               </div>
             </label>
 
-            <label className="block text-xs font-medium text-[#A1A1AA]">
+            <label className="block text-xs font-medium text-ink-muted">
               Hostel or Institution (optional)
               <input
                 type="text"
@@ -559,12 +559,12 @@ export function AuthPage({
                 value={hostel}
                 onChange={(e) => setHostel(e.target.value)}
                 placeholder="North Wing Hall · Block B"
-                className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] focus:outline-none focus:border-[#D4AF37]"
+                className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 focus:outline-none focus:border-accent-strong"
               />
             </label>
 
             <div>
-              <span className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+              <span className="block text-xs font-medium text-ink-muted mb-1.5">
                 Profile Picture (from Gallery · optional)
               </span>
               <div className="flex items-center gap-3">
@@ -573,15 +573,15 @@ export function AuthPage({
                     src={avatarUrl}
                     alt="Profile preview"
                     referrerPolicy="no-referrer"
-                    className="w-11 h-11 rounded-full object-cover border border-[#D4AF37]/50 shrink-0"
+                    className="w-11 h-11 rounded-full object-cover border border-accent-strong/50 shrink-0"
                   />
                 ) : (
-                  <div className="w-11 h-11 rounded-full bg-[#0A0A0C] border border-white/15 flex items-center justify-center text-xs font-bold text-[#D4AF37] shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-canvas-alt border border-hairline-strong flex items-center justify-center text-xs font-bold text-accent-strong shrink-0">
                     {(fullName || 'H').charAt(0).toUpperCase()}
                   </div>
                 )}
-                <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-white/10 text-xs font-medium text-[#F8F9FA] hover:border-[#D4AF37]/50 hover:bg-white/[0.04] flex items-center gap-2 transition-colors">
-                  <Upload className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-hairline text-xs font-medium text-ink-2 hover:border-accent-strong/50 hover:bg-hover-tint flex items-center gap-2 transition-colors">
+                  <Upload className="w-3.5 h-3.5 text-accent-strong" />
                   <span>{avatarUploading ? 'Uploading...' : 'Select Profile Picture'}</span>
                   <input
                     type="file"
@@ -592,7 +592,7 @@ export function AuthPage({
                   />
                 </label>
                 {avatarUrl && (
-                  <span className="text-xs text-[#D4AF37] flex items-center gap-1">
+                  <span className="text-xs text-accent-strong flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                   </span>
                 )}
@@ -600,12 +600,12 @@ export function AuthPage({
             </div>
 
             <div>
-              <span className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+              <span className="block text-xs font-medium text-ink-muted mb-1.5">
                 Cover Photo (from Gallery · optional)
               </span>
               <div className="space-y-2">
                 {coverUrl && (
-                  <div className="h-24 w-full rounded-xl overflow-hidden border border-[#D4AF37]/40 bg-[#0A0A0C]">
+                  <div className="h-24 w-full rounded-xl overflow-hidden border border-accent-strong/40 bg-canvas-alt">
                     <img
                       src={coverUrl}
                       alt="Cover preview"
@@ -615,8 +615,8 @@ export function AuthPage({
                   </div>
                 )}
                 <div className="flex items-center gap-3">
-                  <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-white/10 text-xs font-medium text-[#F8F9FA] hover:border-[#D4AF37]/50 hover:bg-white/[0.04] flex items-center gap-2 transition-colors">
-                    <ImageIcon className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <label className="cursor-pointer px-3.5 py-2 rounded-xl border border-hairline text-xs font-medium text-ink-2 hover:border-accent-strong/50 hover:bg-hover-tint flex items-center gap-2 transition-colors">
+                    <ImageIcon className="w-3.5 h-3.5 text-accent-strong" />
                     <span>{coverUploading ? 'Uploading...' : 'Select Cover Photo'}</span>
                     <input
                       type="file"
@@ -627,7 +627,7 @@ export function AuthPage({
                     />
                   </label>
                   {coverUrl && (
-                    <span className="text-xs text-[#D4AF37] flex items-center gap-1">
+                    <span className="text-xs text-accent-strong flex items-center gap-1">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                     </span>
                   )}
@@ -649,40 +649,40 @@ export function AuthPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] flex flex-col justify-center items-center p-4 py-10">
+    <div className="min-h-screen bg-canvas-alt flex flex-col justify-center items-center p-4 py-10">
       <div className="w-full max-w-md">
         <button
           type="button"
           onClick={onBackToLanding}
-          className="mb-6 inline-flex items-center gap-2 text-xs font-medium text-[#A1A1AA] hover:text-[#F8F9FA] transition-colors"
+          className="mb-6 inline-flex items-center gap-2 text-xs font-medium text-ink-muted hover:text-ink-2 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Hostel Friend</span>
         </button>
 
-        <div className="glass-surface rounded-2xl p-7 border border-white/10 shadow-2xl">
+        <div className="glass-surface rounded-2xl p-7 border border-hairline shadow-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <img
                 src="/icons/icon-192.png"
                 alt="Hostel Friend"
-                className="w-7 h-7 rounded-lg object-cover border border-white/15"
+                className="w-7 h-7 rounded-lg object-cover border border-hairline-strong"
               />
-              <span className="font-display font-bold tracking-tight text-lg text-[#F8F9FA]">
+              <span className="font-display font-bold tracking-tight text-lg text-ink-2">
                 Hostel Friend
               </span>
             </div>
-            <ShieldCheck className="w-4 h-4 text-[#00C8FF]" />
+            <ShieldCheck className="w-4 h-4 text-accent" />
           </div>
 
-          <h1 className="mt-4 font-display text-2xl font-bold text-[#F8F9FA]">
+          <h1 className="mt-4 font-display text-2xl font-bold text-ink-2">
             {mode === 'login'
               ? 'Welcome back'
               : mode === 'signup'
               ? 'Start Account Setup'
               : 'Reset password'}
           </h1>
-          <p className="mt-1.5 text-sm text-[#A1A1AA]">
+          <p className="mt-1.5 text-sm text-ink-muted">
             {mode === 'login'
               ? 'Connect Google or sign in with your Hostel Friend email.'
               : mode === 'signup'
@@ -692,7 +692,7 @@ export function AuthPage({
 
           {/* Segmented Mode Switcher */}
           {mode !== 'forgot' && (
-            <div className="mt-5 grid grid-cols-2 gap-1 p-1 bg-[#0A0A0C] rounded-xl border border-white/[0.06]">
+            <div className="mt-5 grid grid-cols-2 gap-1 p-1 bg-canvas-alt rounded-xl border border-hairline">
               <button
                 type="button"
                 onClick={() => {
@@ -702,8 +702,8 @@ export function AuthPage({
                 }}
                 className={`py-2 text-xs font-semibold rounded-lg transition-colors ${
                   mode === 'login'
-                    ? 'bg-[#151519] text-[#F8F9FA] border border-white/10'
-                    : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                    ? 'bg-surface-2 text-ink-2 border border-hairline'
+                    : 'text-ink-muted hover:text-ink-2'
                 }`}
               >
                 Sign In
@@ -717,8 +717,8 @@ export function AuthPage({
                 }}
                 className={`py-2 text-xs font-semibold rounded-lg transition-colors ${
                   mode === 'signup'
-                    ? 'bg-[#151519] text-[#F8F9FA] border border-white/10'
-                    : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                    ? 'bg-surface-2 text-ink-2 border border-hairline'
+                    : 'text-ink-muted hover:text-ink-2'
                 }`}
               >
                 Account Setup
@@ -735,7 +735,7 @@ export function AuthPage({
             </div>
           )}
           {successMsg && (
-            <div className="mt-4 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 p-3 text-xs text-[#E7C96F] leading-relaxed">
+            <div className="mt-4 rounded-xl bg-accent-strong/10 border border-accent-strong/30 p-3 text-xs text-accent-soft leading-relaxed">
               {successMsg}
             </div>
           )}
@@ -746,7 +746,7 @@ export function AuthPage({
                 type="button"
                 disabled={loading}
                 onClick={handleGoogleSignIn}
-                className="w-full py-3 px-4 rounded-xl text-sm font-semibold border border-[#D4AF37]/50 bg-[#0A0A0C] text-[#F8F9FA] hover:border-[#D4AF37] hover:bg-white/[0.04] transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl text-sm font-semibold border border-accent-strong/50 bg-canvas-alt text-ink-2 hover:border-accent-strong hover:bg-hover-tint transition-colors flex items-center justify-center gap-2.5 disabled:opacity-50"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -775,17 +775,17 @@ export function AuthPage({
                 </span>
               </button>
 
-              <div className="pt-2 pb-1 flex items-center gap-3 text-xs text-[#71717A]">
-                <div className="flex-1 h-px bg-white/[0.08]" />
+              <div className="pt-2 pb-1 flex items-center gap-3 text-xs text-ink-subtle">
+                <div className="flex-1 h-px bg-hover-tint" />
                 <span>{mode === 'signup' ? 'or set up with email' : 'or sign in with email'}</span>
-                <div className="flex-1 h-px bg-white/[0.08]" />
+                <div className="flex-1 h-px bg-hover-tint" />
               </div>
             </div>
           )}
 
           {mode === 'login' && (
             <form onSubmit={handleLoginSubmit} className="mt-5 space-y-4">
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Email
                 <input
                   type="email"
@@ -793,11 +793,11 @@ export function AuthPage({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@university.edu"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Password
                 <input
                   type="password"
@@ -805,7 +805,7 @@ export function AuthPage({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
@@ -817,7 +817,7 @@ export function AuthPage({
                     setErrorMsg('');
                     setSuccessMsg('');
                   }}
-                  className="text-xs text-[#D4AF37] hover:text-[#E7C96F]"
+                  className="text-xs text-accent-strong hover:text-accent-soft"
                 >
                   Forgot password?
                 </button>
@@ -835,7 +835,7 @@ export function AuthPage({
 
           {mode === 'signup' && (
             <form onSubmit={handleSignUpSubmit} className="mt-5 space-y-3.5">
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Full Name
                 <input
                   type="text"
@@ -844,11 +844,11 @@ export function AuthPage({
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Zara Kapoor"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Username
                 <input
                   type="text"
@@ -858,10 +858,10 @@ export function AuthPage({
                   value={username}
                   onChange={(e) => setUsername(sanitizeUsername(e.target.value))}
                   placeholder="zara_hostel"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
                 {usernameStatus === 'available' && (
-                  <span className="mt-1 block text-[11px] text-[#D4AF37]">
+                  <span className="mt-1 block text-[11px] text-accent-strong">
                     @{sanitizeUsername(username)} is available
                   </span>
                 )}
@@ -872,7 +872,7 @@ export function AuthPage({
                 )}
               </label>
 
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Email
                 <input
                   type="email"
@@ -880,11 +880,11 @@ export function AuthPage({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@university.edu"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Password
                 <input
                   type="password"
@@ -893,11 +893,11 @@ export function AuthPage({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Hostel or Institution (optional)
                 <input
                   type="text"
@@ -905,7 +905,7 @@ export function AuthPage({
                   value={hostel}
                   onChange={(e) => setHostel(e.target.value)}
                   placeholder="Cedar Hall · Engineering Campus"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
@@ -921,7 +921,7 @@ export function AuthPage({
 
           {mode === 'forgot' && (
             <form onSubmit={handleForgotSubmit} className="mt-5 space-y-4">
-              <label className="block text-xs font-medium text-[#A1A1AA]">
+              <label className="block text-xs font-medium text-ink-muted">
                 Account Email
                 <input
                   type="email"
@@ -929,7 +929,7 @@ export function AuthPage({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@university.edu"
-                  className="mt-1.5 w-full rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2.5 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                  className="mt-1.5 w-full rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2.5 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
                 />
               </label>
 
@@ -948,7 +948,7 @@ export function AuthPage({
                   setErrorMsg('');
                   setSuccessMsg('');
                 }}
-                className="w-full text-xs text-[#A1A1AA] hover:text-[#F8F9FA]"
+                className="w-full text-xs text-ink-muted hover:text-ink-2"
               >
                 Return to Sign In
               </button>

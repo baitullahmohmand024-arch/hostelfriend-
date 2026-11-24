@@ -303,14 +303,16 @@ export const onMessageCreated = onDocumentCreated(
   }
 );
 
-// 3. Post Like Trigger
+// 3. Post Like / Reaction Trigger
 export const onLikeCreated = onDocumentCreated(
   {
     document: 'likes/{likeId}',
     database: '(default)',
   },
   async (event) => {
-    const like = event.data?.data() as { postId: string; userId: string } | undefined;
+    const like = event.data?.data() as
+      | { postId: string; userId: string; reactionType?: string }
+      | undefined;
     if (!like) return;
 
     const postSnap = await db.doc(`posts/${like.postId}`).get();
@@ -332,14 +334,24 @@ export const onLikeCreated = onDocumentCreated(
 
     const actorSnap = await db.doc(`users/${like.userId}`).get();
     const actorName = (actorSnap.data()?.fullName as string) || 'Someone';
+    const reactionLabels: Record<string, string> = {
+      love: '❤️ Love',
+      haha: '😂 Haha',
+      wow: '😮 Wow',
+      sad: '😢 Sad',
+      care: '🤗 Care',
+    };
+    const reactionText = like.reactionType ? reactionLabels[like.reactionType] : '';
+    const title = reactionText ? 'New Reaction' : 'New Like';
+    const actionPhrase = reactionText ? `reacted ${reactionText} to your post.` : 'liked your post.';
 
     await createNotificationIfAbsent({
       recipientId: postAuthorId,
       actorId: like.userId,
       type: 'POST_LIKE',
-      title: 'New Like',
-      body: `${actorName} liked your post.`,
-      message: 'liked your post.',
+      title,
+      body: `${actorName} ${actionPhrase}`,
+      message: actionPhrase,
       postId: like.postId,
       relatedPostId: like.postId,
       actionUrl: `/?view=feed&post=${encodeURIComponent(like.postId)}`,

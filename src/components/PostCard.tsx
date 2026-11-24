@@ -3,7 +3,6 @@ import {
   Bookmark,
   CornerDownRight,
   Flag,
-  Heart,
   ImageOff,
   MessageCircle,
   MoreHorizontal,
@@ -14,9 +13,10 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { CommentItem, Post, UserProfile } from '../types';
+import { CommentItem, Post, ReactionType, UserProfile } from '../types';
 import { formatCount, formatRelativeTime } from '../utils/formatters';
 import { addComment, deleteComment, fetchComments } from '../services/postService';
+import { parseLegacyPollPost } from '../services/pollService';
 import {
   cancelOrRemoveFriendRequest,
   getFriendRequestId,
@@ -28,6 +28,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Avatar } from './Avatar';
 import { ConfirmDialog } from './ConfirmDialog';
+import { ReactionControl, ReactionSummaryTrigger } from './ReactionControl';
+import { ReactionDetailsModal } from './ReactionDetailsModal';
 import { ReportModal } from './ReportModal';
 import { SharePostModal } from './SharePostModal';
 import { formatUserFriendlyError } from '../lib/firestoreError';
@@ -37,9 +39,11 @@ interface PostCardProps {
   post: Post;
   currentUser: UserProfile | null;
   isAdmin?: boolean;
-  isLiked: boolean;
+  isLiked?: boolean;
+  userReaction?: ReactionType | null;
   isSaved: boolean;
-  onToggleLike: (post: Post) => Promise<void>;
+  onToggleLike?: (post: Post) => Promise<void>;
+  onSelectReaction?: (post: Post, reaction: ReactionType | null) => Promise<void>;
   onToggleSave: (post: Post) => Promise<void>;
   onDeletePost: (post: Post) => Promise<void>;
   onOpenProfile: (userId: string) => void;
@@ -54,9 +58,11 @@ export function PostCard({
   post,
   currentUser,
   isAdmin = false,
-  isLiked,
+  isLiked = false,
+  userReaction,
   isSaved,
   onToggleLike,
+  onSelectReaction,
   onToggleSave,
   onDeletePost,
   onOpenProfile,
@@ -66,6 +72,15 @@ export function PostCard({
   initialCommentsOpen = false,
   highlightCommentId,
 }: PostCardProps) {
+  const activeReaction: ReactionType | null =
+    userReaction !== undefined ? userReaction : isLiked ? 'like' : null;
+  const handleReactionSelection = (reaction: ReactionType | null) => {
+    if (onSelectReaction) {
+      void onSelectReaction(post, reaction);
+    } else if (onToggleLike) {
+      void onToggleLike(post);
+    }
+  };
   const { showToast } = useToast();
   const { followingIds, friendRequests } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -82,13 +97,21 @@ export function PostCard({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [localCommentsCount, setLocalCommentsCount] = useState(post.commentsCount);
   const [mediaError, setMediaError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [captionExpanded, setCaptionExpanded] = useState(false);
   const [muted, setMuted] = useState(true);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMediaError(false);
+    setImageLoaded(false);
+  }, [post.id, post.mediaUrl]);
 
   useEffect(() => {
     setLocalCommentsCount(post.commentsCount);
@@ -299,8 +322,20 @@ export function PostCard({
       : 'aspect-[4/3]';
 
   if (variant === 'feed') {
+    const parsedLegacyPoll = parseLegacyPollPost(post);
+    const displayCaption = parsedLegacyPoll
+      ? `Poll: ${parsedLegacyPoll.question}\n${parsedLegacyPoll.options
+          .map((opt, idx) => `${idx + 1}. ${opt}`)
+          .join('\n')}`
+      : post.caption;
+    const isLongCaption = displayCaption.length > 280 || displayCaption.split('\n').length > 5;
+    const shownCaption =
+      isLongCaption && !captionExpanded
+        ? `${displayCaption.slice(0, 260).trimEnd()}...`
+        : displayCaption;
+
     return (
-      <article className="bg-[#111114] border border-[#F5C542]/25 hover:border-[#F5C542]/45 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.55)] transition-all duration-200">
+      <article className="glass-card md:hover:border-accent/35 rounded-2xl overflow-hidden">
         {/* Post Author Header */}
         <div className="px-4 sm:px-5 pt-4 pb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -308,7 +343,7 @@ export function PostCard({
               type="button"
               onClick={() => onOpenProfile(post.authorId)}
               aria-label={`View ${post.authorName}'s profile`}
-              className="rounded-full p-[1.5px] bg-gradient-to-tr from-[#D99B19]/70 via-[#F5C542]/80 to-[#F8D162]/60 shrink-0"
+              className="rounded-full p-[1.5px] bg-gradient-to-tr from-accent-deep/75 via-accent/80 to-accent-soft/65 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Avatar src={post.authorAvatarUrl} name={post.authorName} size="md" />
             </button>
@@ -317,13 +352,13 @@ export function PostCard({
                 <button
                   type="button"
                   onClick={() => onOpenProfile(post.authorId)}
-                  className="text-[15px] font-display font-semibold text-[#FFFFFF] hover:text-[#F5C542] transition-colors truncate"
+                  className="text-[15px] font-display font-semibold text-ink hover:text-accent transition-colors truncate"
                 >
                   {post.authorName}
                 </button>
                 {showAuthorFollowControl && (
                   <>
-                    <span className="text-[#A5A5AD]/60 text-xs shrink-0" aria-hidden="true">
+                    <span className="text-ink-muted/60 text-xs shrink-0" aria-hidden="true">
                       ·
                     </span>
                     <button
@@ -332,8 +367,8 @@ export function PostCard({
                       onClick={handleAuthorFollowClick}
                       className={`text-xs font-semibold shrink-0 whitespace-nowrap transition-colors disabled:opacity-50 ${
                         followStatus === 'follow' || followStatus === 'incoming'
-                          ? 'text-[#F5C542] hover:text-[#F8D162]'
-                          : 'text-[#A5A5AD] hover:text-[#FFFFFF]'
+                          ? 'text-accent hover:text-accent-soft'
+                          : 'text-ink-muted hover:text-ink'
                       }`}
                     >
                       {followActionBusy ? '...' : followButtonLabel}
@@ -341,7 +376,7 @@ export function PostCard({
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-[#A5A5AD] truncate">
+              <div className="flex items-center gap-1.5 text-xs text-ink-muted truncate">
                 <span className="truncate">@{post.authorUsername}</span>
                 <span aria-hidden="true">·</span>
                 <span className="shrink-0">{formatRelativeTime(post.createdAt)}</span>
@@ -354,22 +389,22 @@ export function PostCard({
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Post options"
-              className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-[#A5A5AD] hover:text-[#F5C542] hover:bg-[#19191D] transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-ink-muted hover:text-accent hover:bg-surface-hover transition-colors"
             >
               <MoreHorizontal className="w-5 h-5" />
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-[#19191D] rounded-xl py-1.5 shadow-2xl border border-[#F5C542]/25 z-20">
+              <div className="absolute right-0 mt-1.5 w-48 glass-popover hf-popover-enter rounded-xl py-1.5 z-20">
                 <button
                   type="button"
                   onClick={() => {
                     setMenuOpen(false);
                     handleShare();
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs font-medium text-[#FFFFFF] hover:bg-white/[0.06] flex items-center gap-2.5"
+                  className="w-full min-h-[40px] px-3.5 py-2 text-left text-xs font-medium text-ink hover:bg-hover-tint flex items-center gap-2.5"
                 >
-                  <Share2 className="w-3.5 h-3.5 text-[#F5C542]" />
+                  <Share2 className="w-3.5 h-3.5 text-accent" />
                   Share Post
                 </button>
 
@@ -380,9 +415,9 @@ export function PostCard({
                       setMenuOpen(false);
                       setReportOpen(true);
                     }}
-                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-[#FFFFFF] hover:bg-white/[0.06] flex items-center gap-2.5"
+                    className="w-full min-h-[40px] px-3.5 py-2 text-left text-xs font-medium text-ink hover:bg-hover-tint flex items-center gap-2.5"
                   >
-                    <Flag className="w-3.5 h-3.5 text-[#F5C542]" />
+                    <Flag className="w-3.5 h-3.5 text-accent" />
                     Report Post
                   </button>
                 )}
@@ -394,7 +429,7 @@ export function PostCard({
                       setMenuOpen(false);
                       setConfirmDeleteOpen(true);
                     }}
-                    className="w-full px-3.5 py-2 text-left text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5"
+                    className="w-full min-h-[40px] px-3.5 py-2 text-left text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Delete Post
@@ -405,26 +440,45 @@ export function PostCard({
           </div>
         </div>
 
-        {/* Caption & Hashtags Above Media */}
+        {/* Caption & Hashtags */}
         {(post.caption || post.hashtags.length > 0) && (
           <div className="px-4 sm:px-5 pb-3 space-y-2">
             {post.caption && (
-              <p
-                className={`${
-                  post.mediaType === 'text' ? 'text-[16px] sm:text-[17px]' : 'text-[15px]'
-                } text-[#FFFFFF]/95 leading-relaxed whitespace-pre-wrap break-words`}
+              <div
+                className={
+                  post.mediaType === 'text'
+                    ? 'rounded-xl bg-canvas-alt border border-hairline px-4 py-4'
+                    : ''
+                }
               >
-                {post.caption}
-              </p>
+                <p
+                  className={`${
+                    post.mediaType === 'text'
+                      ? 'text-[16px] sm:text-[17px]'
+                      : 'text-[14.5px] sm:text-[15px]'
+                  } text-ink-2 leading-relaxed whitespace-pre-wrap break-words`}
+                >
+                  {shownCaption}
+                </p>
+                {isLongCaption && (
+                  <button
+                    type="button"
+                    onClick={() => setCaptionExpanded((e) => !e)}
+                    className="mt-1.5 text-xs font-semibold text-accent hover:text-accent-soft"
+                  >
+                    {captionExpanded ? 'Show less' : 'Read more'}
+                  </button>
+                )}
+              </div>
             )}
             {post.hashtags.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-[13px] font-medium text-[#F5C542]">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-[13px] font-medium text-accent">
                 {post.hashtags.map((tag) => (
                   <button
                     key={tag}
                     type="button"
                     onClick={() => onSearchHashtag(tag)}
-                    className="hover:text-[#F8D162] hover:underline transition-colors"
+                    className="hover:text-accent-soft hover:underline transition-colors"
                   >
                     #{tag}
                   </button>
@@ -437,14 +491,16 @@ export function PostCard({
         {/* Attached Image or Video */}
         {post.mediaType !== 'text' && (
           <div className="px-4 sm:px-5 pb-3">
-            <div className="relative rounded-xl overflow-hidden bg-[#050505] border border-white/[0.08]">
+            <div className="relative rounded-xl overflow-hidden bg-canvas border border-hairline">
               {mediaError ? (
-                <div className={`${aspectClass} w-full flex flex-col items-center justify-center gap-2 text-[#A5A5AD] px-6 text-center`}>
-                  <ImageOff className="w-8 h-8 opacity-60 text-[#F5C542]" />
-                  <p className="text-xs">Media unavailable</p>
+                <div
+                  className={`${aspectClass} max-h-[460px] w-full bg-gradient-to-br from-surface-2 via-canvas-alt to-canvas flex flex-col items-center justify-center gap-2 text-ink-muted px-6 text-center`}
+                >
+                  <ImageOff className="w-7 h-7 opacity-65 text-accent" />
+                  <p className="text-xs font-medium text-ink-2">Media unavailable</p>
                 </div>
               ) : post.mediaType === 'video' ? (
-                <div className={`relative ${aspectClass} w-full bg-black flex items-center justify-center`}>
+                <div className={`relative ${aspectClass} max-h-[540px] w-full bg-black flex items-center justify-center`}>
                   <video
                     src={post.mediaUrl}
                     poster={post.thumbnailUrl || undefined}
@@ -459,21 +515,24 @@ export function PostCard({
                     type="button"
                     onClick={() => setMuted((m) => !m)}
                     aria-label={muted ? 'Unmute video' : 'Mute video'}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-black/65 backdrop-blur-md text-[#F5C542] border border-[#F5C542]/30 hover:bg-black/85 transition-colors"
+                    className="min-w-[40px] min-h-[40px] flex items-center justify-center absolute top-3 right-3 rounded-full bg-black/70 backdrop-blur-md text-accent border border-accent/35 hover:bg-black/90 transition-colors"
                   >
                     {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   </button>
                 </div>
               ) : (
-                <div className={`${aspectClass} w-full overflow-hidden`}>
+                <div className={`${aspectClass} max-h-[540px] w-full overflow-hidden bg-canvas-alt`}>
                   <img
                     src={post.mediaUrl}
                     alt={post.caption || `Post by ${post.authorName}`}
                     loading="lazy"
                     decoding="async"
                     referrerPolicy="no-referrer"
+                    onLoad={() => setImageLoaded(true)}
                     onError={() => setMediaError(true)}
-                    className="w-full h-full object-cover"
+                    className={`w-full h-full object-cover transition-opacity duration-200 ${
+                      imageLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
                   />
                 </div>
               )}
@@ -481,66 +540,53 @@ export function PostCard({
           </div>
         )}
 
-        {/* Reaction Summary + Golden Actions Bar */}
+        {/* Reaction Summary + Actions Bar */}
         <div className="px-4 sm:px-5 pb-3">
-          <div className="pb-2.5 border-b border-white/[0.08] flex items-center justify-between text-xs text-[#A5A5AD]">
-            <span className="inline-flex items-center gap-1.5 tabular-nums">
-              <Heart className="w-3.5 h-3.5 fill-[#F5C542] text-[#F5C542]" />
-              <span className="text-[#FFFFFF] font-medium">{formatCount(post.likesCount)}</span>
-              <span>{post.likesCount === 1 ? 'like' : 'likes'}</span>
-            </span>
+          <div className="pb-2.5 border-b border-hairline flex items-center justify-between gap-3 text-xs text-ink-muted">
+            <ReactionSummaryTrigger
+              post={post}
+              onOpenDetails={() => setReactionsModalOpen(true)}
+            />
             <button
               type="button"
               onClick={handleToggleComments}
-              className="hover:text-[#F5C542] transition-colors tabular-nums"
+              className="hover:text-accent transition-colors tabular-nums shrink-0"
             >
               {formatCount(localCommentsCount)} {localCommentsCount === 1 ? 'comment' : 'comments'}
             </button>
           </div>
 
           <div className="pt-1.5 flex items-center justify-between gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (currentUser) {
-                  playSound(isLiked ? 'unlike' : 'like');
-                  void onToggleLike(post);
-                } else {
-                  onRequireAuth?.();
-                }
-              }}
-              className={`flex-1 min-h-[42px] px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold transition-all active:scale-[0.98] whitespace-nowrap ${
-                isLiked
-                  ? 'text-[#F5C542] bg-[#F5C542]/12'
-                  : 'text-[#FFFFFF]/90 hover:text-[#F5C542] hover:bg-[#19191D]'
-              }`}
-              aria-label={isLiked ? 'Unlike post' : 'Like post'}
-            >
-              <Heart className={`w-4 h-4 text-[#F5C542] ${isLiked ? 'fill-[#F5C542]' : ''}`} />
-              <span>{isLiked ? 'Liked' : 'Like'}</span>
-            </button>
+            <ReactionControl
+              currentReaction={activeReaction}
+              isAuthenticated={Boolean(currentUser)}
+              onSelectReaction={handleReactionSelection}
+              onRequireAuth={onRequireAuth}
+              variant="feed"
+            />
 
             <button
               type="button"
               onClick={handleToggleComments}
-              className={`flex-1 min-h-[42px] px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold transition-all active:scale-[0.98] whitespace-nowrap ${
+              aria-expanded={commentsOpen}
+              className={`flex-1 min-h-[44px] px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold hf-press whitespace-nowrap ${
                 commentsOpen
-                  ? 'text-[#F5C542] bg-[#19191D]'
-                  : 'text-[#FFFFFF]/90 hover:text-[#F5C542] hover:bg-[#19191D]'
+                  ? 'text-accent bg-surface-hover'
+                  : 'text-ink-2 hover:text-accent hover:bg-surface-hover'
               }`}
               aria-label="Toggle comments"
             >
-              <MessageCircle className="w-4 h-4 text-[#F5C542]" />
+              <MessageCircle className="w-4 h-4 text-accent" />
               <span>Comment</span>
             </button>
 
             <button
               type="button"
               onClick={handleShare}
-              className="flex-1 min-h-[42px] px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold text-[#FFFFFF]/90 hover:text-[#F5C542] hover:bg-[#19191D] transition-all active:scale-[0.98] whitespace-nowrap"
+              className="flex-1 min-h-[44px] px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold text-ink-2 hover:text-accent hover:bg-surface-hover hf-press whitespace-nowrap"
               aria-label="Share post"
             >
-              <Share2 className="w-4 h-4 text-[#F5C542]" />
+              <Share2 className="w-4 h-4 text-accent" />
               <span>Share</span>
             </button>
 
@@ -554,26 +600,27 @@ export function PostCard({
                   onRequireAuth?.();
                 }
               }}
-              className={`min-h-[42px] min-w-[42px] px-2.5 rounded-xl flex items-center justify-center transition-all active:scale-[0.98] shrink-0 ${
+              aria-pressed={isSaved}
+              className={`min-h-[44px] min-w-[44px] px-2.5 rounded-xl flex items-center justify-center hf-press shrink-0 ${
                 isSaved
-                  ? 'text-[#F5C542] bg-[#F5C542]/12'
-                  : 'text-[#A5A5AD] hover:text-[#F5C542] hover:bg-[#19191D]'
+                  ? 'text-accent bg-accent/12'
+                  : 'text-ink-muted hover:text-accent hover:bg-surface-hover'
               }`}
               aria-label={isSaved ? 'Remove from saved' : 'Save post'}
             >
-              <Bookmark className={`w-4 h-4 text-[#F5C542] ${isSaved ? 'fill-[#F5C542]' : ''}`} />
+              <Bookmark className={`w-4 h-4 text-accent ${isSaved ? 'fill-accent' : ''}`} />
             </button>
           </div>
 
           {/* Comments Drawer */}
           {commentsOpen && (
-            <div className="mt-3 pt-3.5 border-t border-white/[0.08] space-y-3">
+            <div className="mt-3 pt-3.5 border-t border-hairline space-y-3">
               {commentsLoading ? (
-                <p className="text-xs text-[#A5A5AD]">Loading comments...</p>
+                <p className="text-xs text-ink-muted">Loading comments...</p>
               ) : comments.length === 0 ? (
-                <p className="text-xs text-[#A5A5AD]">No comments yet. Start the conversation.</p>
+                <p className="text-xs text-ink-muted">No comments yet. Start the conversation.</p>
               ) : (
-                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
                   {comments.map((comment) => {
                     const canRemoveComment = Boolean(
                       currentUser &&
@@ -586,9 +633,9 @@ export function PostCard({
                     return (
                       <div
                         key={comment.id}
-                        className={`flex items-start justify-between gap-3 rounded-xl px-2 py-1.5 transition-colors ${
-                          isReply ? 'ml-5 border-l-2 border-[#F5C542]/25 pl-3' : ''
-                        } ${isHighlighted ? 'bg-[#F5C542]/12 ring-1 ring-[#F5C542]/45' : ''}`}
+                        className={`flex items-start justify-between gap-3 rounded-xl px-2.5 py-2 transition-colors ${
+                          isReply ? 'ml-6 bg-hover-tint/50' : ''
+                        } ${isHighlighted ? 'bg-accent/12 ring-1 ring-accent/45' : ''}`}
                       >
                         <div className="flex items-start gap-2.5 min-w-0">
                           <Avatar
@@ -597,28 +644,28 @@ export function PostCard({
                             size="xs"
                           />
                           <div className="min-w-0">
-                            <p className="text-xs text-[#FFFFFF] leading-relaxed break-words">
+                            <p className="text-xs text-ink leading-relaxed break-words">
                               <button
                                 type="button"
                                 onClick={() => onOpenProfile(comment.authorId)}
-                                className="font-semibold hover:text-[#F5C542] mr-1.5"
+                                className="font-semibold hover:text-accent mr-1.5"
                               >
                                 @{comment.authorUsername}
                               </button>
                               {comment.replyToUsername && (
-                                <span className="text-[#F5C542]/90 mr-1.5 font-medium">
+                                <span className="text-accent/90 mr-1.5 font-medium">
                                   @{comment.replyToUsername}
                                 </span>
                               )}
                               {comment.text}
                             </p>
-                            <div className="mt-0.5 flex items-center gap-3 text-[11px] text-[#A5A5AD]">
+                            <div className="mt-0.5 flex items-center gap-3 text-[11px] text-ink-muted">
                               <span>{formatRelativeTime(comment.createdAt)}</span>
                               {currentUser && (
                                 <button
                                   type="button"
                                   onClick={() => handleStartReply(comment)}
-                                  className="inline-flex items-center gap-1 hover:text-[#F5C542] font-medium transition-colors"
+                                  className="inline-flex items-center gap-1 hover:text-accent font-medium transition-colors"
                                 >
                                   <CornerDownRight className="w-3 h-3" />
                                   <span>Reply</span>
@@ -632,7 +679,7 @@ export function PostCard({
                             type="button"
                             onClick={() => handleDeleteComment(comment)}
                             aria-label="Delete comment"
-                            className="text-[#A5A5AD] hover:text-rose-400 p-1 rounded transition-colors shrink-0"
+                            className="min-w-[34px] min-h-[34px] flex items-center justify-center text-ink-muted hover:text-rose-400 rounded-lg transition-colors shrink-0"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -644,15 +691,15 @@ export function PostCard({
               )}
 
               {replyingTo && (
-                <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#F5C542]/10 border border-[#F5C542]/25 text-xs">
-                  <span className="text-[#F5C542] truncate">
+                <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/25 text-xs">
+                  <span className="text-accent truncate">
                     Replying to <strong>@{replyingTo.replyToUsername}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={() => setReplyingTo(null)}
                     aria-label="Cancel reply"
-                    className="text-[#A5A5AD] hover:text-[#FFFFFF]"
+                    className="text-ink-muted hover:text-ink"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -670,16 +717,16 @@ export function PostCard({
                     replyingTo
                       ? `Reply to @${replyingTo.replyToUsername}...`
                       : currentUser
-                      ? 'Add a thoughtful comment or @mention...'
+                      ? 'Add a comment or @mention...'
                       : 'Sign in to comment'
                   }
-                  className="flex-1 rounded-xl bg-[#050505] border border-white/10 px-3.5 py-2 text-sm text-[#FFFFFF] placeholder:text-[#A5A5AD]/70 focus:outline-none focus:border-[#F5C542]"
+                  className="flex-1 min-h-[42px] rounded-xl bg-canvas border border-hairline px-3.5 py-2 text-sm text-ink placeholder:text-ink-muted/70 focus:outline-none focus:border-accent"
                 />
                 <button
                   type="submit"
                   disabled={submittingComment || !commentText.trim()}
                   aria-label="Send comment"
-                  className="min-h-[38px] min-w-[38px] px-3 rounded-xl gold-gradient-btn flex items-center justify-center disabled:opacity-40 transition-opacity"
+                  className="min-h-[42px] min-w-[42px] px-3 rounded-xl gold-gradient-btn flex items-center justify-center disabled:opacity-40 transition-opacity"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -716,12 +763,20 @@ export function PostCard({
           post={post}
           onClose={() => setShareOpen(false)}
         />
+
+        <ReactionDetailsModal
+          open={reactionsModalOpen}
+          post={post}
+          currentUserReaction={activeReaction}
+          onClose={() => setReactionsModalOpen(false)}
+          onOpenProfile={onOpenProfile}
+        />
       </article>
     );
   }
 
   return (
-    <article className="bg-[#151519] border border-white/[0.08] hover:border-white/[0.14] rounded-2xl overflow-hidden transition-colors duration-200">
+    <article className="glass-card md:hover:border-accent/35 rounded-2xl">
       {/* Header */}
       <div className="px-5 py-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -738,13 +793,13 @@ export function PostCard({
               <button
                 type="button"
                 onClick={() => onOpenProfile(post.authorId)}
-                className="text-sm font-semibold text-[#F8F9FA] hover:text-[#D4AF37] transition-colors truncate"
+                className="text-sm font-semibold text-ink-2 hover:text-accent-strong transition-colors truncate"
               >
                 {post.authorName}
               </button>
               {showAuthorFollowControl && (
                 <>
-                  <span className="text-[#A1A1AA]/60 text-xs shrink-0" aria-hidden="true">
+                  <span className="text-ink-muted/60 text-xs shrink-0" aria-hidden="true">
                     ·
                   </span>
                   <button
@@ -753,8 +808,8 @@ export function PostCard({
                     onClick={handleAuthorFollowClick}
                     className={`text-xs font-semibold shrink-0 whitespace-nowrap transition-colors disabled:opacity-50 ${
                       followStatus === 'follow' || followStatus === 'incoming'
-                        ? 'text-[#D4AF37] hover:text-[#F5C542]'
-                        : 'text-[#A1A1AA] hover:text-[#F8F9FA]'
+                        ? 'text-accent-strong hover:text-accent'
+                        : 'text-ink-muted hover:text-ink-2'
                     }`}
                   >
                     {followActionBusy ? '...' : followButtonLabel}
@@ -762,7 +817,7 @@ export function PostCard({
                 </>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-[#A1A1AA] truncate">
+            <div className="flex items-center gap-1.5 text-xs text-ink-muted truncate">
               <span className="truncate">@{post.authorUsername}</span>
               <span aria-hidden="true">·</span>
               <span className="shrink-0">{formatRelativeTime(post.createdAt)}</span>
@@ -775,22 +830,22 @@ export function PostCard({
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Post options"
-            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-[#A1A1AA] hover:text-[#F8F9FA] hover:bg-white/[0.06] transition-colors"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-ink-muted hover:text-ink-2 hover:bg-hover-tint transition-colors"
           >
             <MoreHorizontal className="w-5 h-5" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-1.5 w-48 glass-surface rounded-xl py-1.5 shadow-2xl border border-white/10 z-20">
+            <div className="absolute right-0 mt-1.5 w-48 glass-popover hf-popover-enter rounded-xl py-1.5 z-20">
               <button
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
                   handleShare();
                 }}
-                className="w-full px-3.5 py-2 text-left text-xs font-medium text-[#F8F9FA] hover:bg-white/[0.06] flex items-center gap-2.5"
+                className="w-full px-3.5 py-2 text-left text-xs font-medium text-ink-2 hover:bg-hover-tint flex items-center gap-2.5"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#A1A1AA]" />
+                <Share2 className="w-3.5 h-3.5 text-ink-muted" />
                 Share Post
               </button>
 
@@ -801,9 +856,9 @@ export function PostCard({
                     setMenuOpen(false);
                     setReportOpen(true);
                   }}
-                  className="w-full px-3.5 py-2 text-left text-xs font-medium text-[#F8F9FA] hover:bg-white/[0.06] flex items-center gap-2.5"
+                  className="w-full px-3.5 py-2 text-left text-xs font-medium text-ink-2 hover:bg-hover-tint flex items-center gap-2.5"
                 >
-                  <Flag className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <Flag className="w-3.5 h-3.5 text-accent-strong" />
                   Report Post
                 </button>
               )}
@@ -828,15 +883,15 @@ export function PostCard({
 
       {/* Media Frame or Text-Only Editorial Surface */}
       {post.mediaType === 'text' ? (
-        <div className="px-5 py-6 bg-[#0A0A0C]/70 border-y border-white/[0.06]">
-          <p className="text-[17px] sm:text-[18px] text-[#F8F9FA] leading-relaxed whitespace-pre-wrap break-words font-normal">
+        <div className="px-5 py-6 bg-canvas-alt/70 border-y border-hairline">
+          <p className="text-[17px] sm:text-[18px] text-ink-2 leading-relaxed whitespace-pre-wrap break-words font-normal">
             {post.caption}
           </p>
         </div>
       ) : (
-        <div className="relative bg-[#0A0A0C] border-y border-white/[0.06]">
+        <div className="relative bg-canvas-alt border-y border-hairline">
           {mediaError ? (
-            <div className={`${aspectClass} w-full flex flex-col items-center justify-center gap-2 text-[#71717A] px-6 text-center`}>
+            <div className={`${aspectClass} w-full flex flex-col items-center justify-center gap-2 text-ink-subtle px-6 text-center`}>
               <ImageOff className="w-8 h-8 opacity-60" />
               <p className="text-xs">Media unavailable</p>
             </div>
@@ -856,7 +911,7 @@ export function PostCard({
                 type="button"
                 onClick={() => setMuted((m) => !m)}
                 aria-label={muted ? 'Unmute video' : 'Mute video'}
-                className="absolute top-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-[#F8F9FA] hover:bg-black/80 transition-colors"
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 transition-colors"
               >
                 {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
@@ -879,36 +934,39 @@ export function PostCard({
 
       {/* Actions Bar */}
       <div className="px-5 pt-3.5 pb-4">
+        <div className="pb-2.5 mb-2 border-b border-hairline flex items-center justify-between gap-2 text-xs">
+          <ReactionSummaryTrigger
+            post={post}
+            onOpenDetails={() => setReactionsModalOpen(true)}
+            compact
+          />
+          <button
+            type="button"
+            onClick={handleToggleComments}
+            className="text-ink-muted hover:text-accent transition-colors tabular-nums shrink-0"
+          >
+            {formatCount(localCommentsCount)} {localCommentsCount === 1 ? 'comment' : 'comments'}
+          </button>
+        </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (currentUser) {
-                  playSound(isLiked ? 'unlike' : 'like');
-                  void onToggleLike(post);
-                } else {
-                  onRequireAuth?.();
-                }
-              }}
-              className={`min-h-[40px] px-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
-                isLiked
-                  ? 'text-[#D4AF37] bg-[#D4AF37]/10'
-                  : 'text-[#A1A1AA] hover:text-[#F8F9FA] hover:bg-white/[0.05]'
-              }`}
-              aria-label={isLiked ? 'Unlike post' : 'Like post'}
-            >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-[#D4AF37] text-[#D4AF37]' : ''}`} />
-              <span className="tabular-nums text-xs">{formatCount(post.likesCount)}</span>
-            </button>
+            <ReactionControl
+              currentReaction={activeReaction}
+              isAuthenticated={Boolean(currentUser)}
+              onSelectReaction={handleReactionSelection}
+              onRequireAuth={onRequireAuth}
+              variant="compact"
+              likesCount={post.likesCount}
+            />
 
             <button
               type="button"
               onClick={handleToggleComments}
               className={`min-h-[40px] px-2.5 rounded-xl flex items-center gap-2 text-sm font-medium transition-colors whitespace-nowrap shrink-0 ${
                 commentsOpen
-                  ? 'text-[#F8F9FA] bg-white/[0.07]'
-                  : 'text-[#A1A1AA] hover:text-[#F8F9FA] hover:bg-white/[0.05]'
+                  ? 'text-ink-2 bg-hover-tint'
+                  : 'text-ink-muted hover:text-ink-2 hover:bg-hover-tint'
               }`}
               aria-label="Toggle comments"
             >
@@ -919,7 +977,7 @@ export function PostCard({
             <button
               type="button"
               onClick={handleShare}
-              className="min-h-[40px] px-2.5 rounded-xl flex items-center gap-2 text-sm font-medium text-[#A1A1AA] hover:text-[#F8F9FA] hover:bg-white/[0.05] transition-colors whitespace-nowrap shrink-0"
+              className="min-h-[40px] px-2.5 rounded-xl flex items-center gap-2 text-sm font-medium text-ink-muted hover:text-ink-2 hover:bg-hover-tint transition-colors whitespace-nowrap shrink-0"
               aria-label="Share post"
             >
               <Share2 className="w-4 h-4" />
@@ -938,12 +996,12 @@ export function PostCard({
             }}
             className={`min-h-[40px] min-w-[40px] flex items-center justify-center rounded-xl transition-colors ${
               isSaved
-                ? 'text-[#D4AF37] bg-[#D4AF37]/10'
-                : 'text-[#A1A1AA] hover:text-[#F8F9FA] hover:bg-white/[0.05]'
+                ? 'text-accent-strong bg-accent-strong/10'
+                : 'text-ink-muted hover:text-ink-2 hover:bg-hover-tint'
             }`}
             aria-label={isSaved ? 'Remove from saved' : 'Save post'}
           >
-            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-[#D4AF37] text-[#D4AF37]' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-accent-strong text-accent-strong' : ''}`} />
           </button>
         </div>
 
@@ -951,11 +1009,11 @@ export function PostCard({
         {((post.mediaType !== 'text' && post.caption) || post.hashtags.length > 0) && (
           <div className="mt-3 space-y-2">
             {post.mediaType !== 'text' && post.caption && (
-              <p className="text-[15px] text-[#F8F9FA]/95 leading-relaxed whitespace-pre-wrap break-words">
+              <p className="text-[15px] text-ink-2/95 leading-relaxed whitespace-pre-wrap break-words">
                 <button
                   type="button"
                   onClick={() => onOpenProfile(post.authorId)}
-                  className="font-semibold text-[#F8F9FA] hover:text-[#D4AF37] mr-2 transition-colors"
+                  className="font-semibold text-ink-2 hover:text-accent-strong mr-2 transition-colors"
                 >
                   {post.authorUsername}
                 </button>
@@ -963,13 +1021,13 @@ export function PostCard({
               </p>
             )}
             {post.hashtags.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#D4AF37]/90">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-accent-strong/90">
                 {post.hashtags.map((tag) => (
                   <button
                     key={tag}
                     type="button"
                     onClick={() => onSearchHashtag(tag)}
-                    className="hover:text-[#E7C96F] hover:underline transition-colors"
+                    className="hover:text-accent-soft hover:underline transition-colors"
                   >
                     #{tag}
                   </button>
@@ -981,11 +1039,11 @@ export function PostCard({
 
         {/* Comments Drawer */}
         {commentsOpen && (
-          <div className="mt-4 pt-4 border-t border-white/[0.08] space-y-3">
+          <div className="mt-4 pt-4 border-t border-hairline space-y-3">
             {commentsLoading ? (
-              <p className="text-xs text-[#A1A1AA]">Loading comments...</p>
+              <p className="text-xs text-ink-muted">Loading comments...</p>
             ) : comments.length === 0 ? (
-              <p className="text-xs text-[#71717A]">No comments yet. Start the conversation.</p>
+              <p className="text-xs text-ink-subtle">No comments yet. Start the conversation.</p>
             ) : (
               <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                 {comments.map((comment) => {
@@ -1001,8 +1059,8 @@ export function PostCard({
                     <div
                       key={comment.id}
                       className={`flex items-start justify-between gap-3 rounded-xl px-2 py-1.5 transition-colors ${
-                        isReply ? 'ml-5 border-l-2 border-[#D4AF37]/25 pl-3' : ''
-                      } ${isHighlighted ? 'bg-[#D4AF37]/12 ring-1 ring-[#D4AF37]/45' : ''}`}
+                        isReply ? 'ml-5 border-l-2 border-accent-strong/25 pl-3' : ''
+                      } ${isHighlighted ? 'bg-accent-strong/12 ring-1 ring-accent-strong/45' : ''}`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
                         <Avatar
@@ -1011,28 +1069,28 @@ export function PostCard({
                           size="xs"
                         />
                         <div className="min-w-0">
-                          <p className="text-xs text-[#F8F9FA] leading-relaxed break-words">
+                          <p className="text-xs text-ink-2 leading-relaxed break-words">
                             <button
                               type="button"
                               onClick={() => onOpenProfile(comment.authorId)}
-                              className="font-semibold hover:text-[#D4AF37] mr-1.5"
+                              className="font-semibold hover:text-accent-strong mr-1.5"
                             >
                               @{comment.authorUsername}
                             </button>
                             {comment.replyToUsername && (
-                              <span className="text-[#D4AF37]/90 mr-1.5 font-medium">
+                              <span className="text-accent-strong/90 mr-1.5 font-medium">
                                 @{comment.replyToUsername}
                               </span>
                             )}
                             {comment.text}
                           </p>
-                          <div className="mt-0.5 flex items-center gap-3 text-[11px] text-[#71717A]">
+                          <div className="mt-0.5 flex items-center gap-3 text-[11px] text-ink-subtle">
                             <span>{formatRelativeTime(comment.createdAt)}</span>
                             {currentUser && (
                               <button
                                 type="button"
                                 onClick={() => handleStartReply(comment)}
-                                className="inline-flex items-center gap-1 hover:text-[#D4AF37] font-medium transition-colors"
+                                className="inline-flex items-center gap-1 hover:text-accent-strong font-medium transition-colors"
                               >
                                 <CornerDownRight className="w-3 h-3" />
                                 <span>Reply</span>
@@ -1046,7 +1104,7 @@ export function PostCard({
                           type="button"
                           onClick={() => handleDeleteComment(comment)}
                           aria-label="Delete comment"
-                          className="text-[#71717A] hover:text-rose-400 p-1 rounded transition-colors shrink-0"
+                          className="text-ink-subtle hover:text-rose-400 p-1 rounded transition-colors shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1058,15 +1116,15 @@ export function PostCard({
             )}
 
             {replyingTo && (
-              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-xs">
-                <span className="text-[#D4AF37] truncate">
+              <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-accent-strong/10 border border-accent-strong/25 text-xs">
+                <span className="text-accent-strong truncate">
                   Replying to <strong>@{replyingTo.replyToUsername}</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => setReplyingTo(null)}
                   aria-label="Cancel reply"
-                  className="text-[#A1A1AA] hover:text-[#F8F9FA]"
+                  className="text-ink-muted hover:text-ink-2"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -1087,7 +1145,7 @@ export function PostCard({
                     ? 'Add a thoughtful comment or @mention...'
                     : 'Sign in to comment'
                 }
-                className="flex-1 rounded-xl bg-[#0A0A0C] border border-white/10 px-3.5 py-2 text-sm text-[#F8F9FA] placeholder:text-[#71717A] focus:outline-none focus:border-[#D4AF37]"
+                className="flex-1 rounded-xl bg-canvas-alt border border-hairline px-3.5 py-2 text-sm text-ink-2 placeholder:text-ink-subtle focus:outline-none focus:border-accent-strong"
               />
               <button
                 type="submit"
@@ -1129,6 +1187,14 @@ export function PostCard({
         open={shareOpen}
         post={post}
         onClose={() => setShareOpen(false)}
+      />
+
+      <ReactionDetailsModal
+        open={reactionsModalOpen}
+        post={post}
+        currentUserReaction={activeReaction}
+        onClose={() => setReactionsModalOpen(false)}
+        onOpenProfile={onOpenProfile}
       />
     </article>
   );

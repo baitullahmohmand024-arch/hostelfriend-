@@ -37,28 +37,28 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto glass-surface rounded-2xl px-4 py-3.5 shadow-2xl flex items-start gap-3 border border-white/10 transition-all duration-200"
+            className="pointer-events-auto glass-popover hf-toast-enter rounded-2xl px-4 py-3.5 flex items-start gap-3"
           >
             {toast.type === 'success' && (
-              <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-accent-strong shrink-0 mt-0.5" />
             )}
             {toast.type === 'error' && (
               <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
             )}
             {toast.type === 'info' && (
-              <Info className="w-5 h-5 text-[#A1A1AA] shrink-0 mt-0.5" />
+              <Info className="w-5 h-5 text-ink-muted shrink-0 mt-0.5" />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#F8F9FA] leading-snug">{toast.title}</p>
+              <p className="text-sm font-semibold text-ink-2 leading-snug">{toast.title}</p>
               {toast.description && (
-                <p className="text-xs text-[#A1A1AA] mt-0.5 leading-relaxed">{toast.description}</p>
+                <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">{toast.description}</p>
               )}
             </div>
             <button
               type="button"
               onClick={() => dismiss(toast.id)}
               aria-label="Dismiss notification"
-              className="text-[#A1A1AA] hover:text-[#F8F9FA] p-1 rounded-lg transition-colors"
+              className="text-ink-muted hover:text-ink-2 p-1 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
