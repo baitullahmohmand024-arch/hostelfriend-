@@ -172,6 +172,14 @@ export function AuthPage({
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return 'Google sign-in popup was closed before completion.';
     }
+    const rawMsg = String((err as { message?: string })?.message || '').toLowerCase();
+    if (
+      rawMsg.includes('cancel') ||
+      rawMsg.includes('dismiss') ||
+      rawMsg.includes('12501')
+    ) {
+      return 'Google sign-in was cancelled before completion.';
+    }
     if (code === 'auth/account-exists-with-different-credential') {
       return 'An account already exists with this email. Sign in with your existing method first, then connect Google in Settings.';
     }
@@ -352,7 +360,7 @@ export function AuthPage({
   // Email Verification Gate
   if (needsVerification && firebaseUser) {
     return (
-      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4">
+      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <div className="glass-surface w-full max-w-md rounded-2xl p-7 border border-hairline">
           <div className="w-11 h-11 rounded-xl bg-accent-strong/15 border border-accent-strong/30 flex items-center justify-center text-accent-strong">
             <Mail className="w-5 h-5" />
@@ -437,7 +445,7 @@ export function AuthPage({
   // Profile Onboarding for newly verified or Google users
   if (needsOnboarding && firebaseUser) {
     return (
-      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4">
+      <div className="min-h-screen bg-canvas-alt flex items-center justify-center p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]">
         <form
           onSubmit={handleOnboardingSubmit}
           className="glass-surface w-full max-w-md rounded-2xl p-7 border border-hairline"
@@ -649,7 +657,7 @@ export function AuthPage({
   }
 
   return (
-    <div className="min-h-screen bg-canvas-alt flex flex-col justify-center items-center p-4 py-10">
+    <div className="min-h-screen bg-canvas-alt flex flex-col justify-center items-center p-4 pt-[calc(2.5rem+env(safe-area-inset-top))] pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
       <div className="w-full max-w-md">
         <button
           type="button"

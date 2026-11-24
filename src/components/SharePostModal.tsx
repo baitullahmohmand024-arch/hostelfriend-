@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Check, Copy, ExternalLink, MessageCircle, Share2, X } from 'lucide-react';
 import { Post } from '../types';
 import { useToast } from '../context/ToastContext';
+import { useModalBackHandler } from '../lib/backNavigation';
+import { openExternalUrl, shareNativeContent } from '../lib/nativeBridge';
+import { getPublicAppUrl, isNativePlatform } from '../lib/nativePlatform';
 import { playSound } from '../utils/soundVfx';
+
 
 interface SharePostModalProps {
   open: boolean;
@@ -50,7 +54,7 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
 
   const shareUrl =
     typeof window !== 'undefined'
-      ? `${window.location.origin}/?post=${encodeURIComponent(post.id)}`
+      ? `${getPublicAppUrl()}/?post=${encodeURIComponent(post.id)}`
       : `/?post=${encodeURIComponent(post.id)}`;
 
   const previewText = post.caption
@@ -60,7 +64,10 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
   const shareMessage = `${post.authorName} on Hostel Friend: "${previewText}"\n${shareUrl}`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
   const supportsNativeShare =
-    typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+    isNativePlatform() ||
+    (typeof navigator !== 'undefined' && typeof navigator.share === 'function');
+
+  useModalBackHandler(open, onClose);
 
   useEffect(() => {
     if (!open) {
@@ -93,17 +100,20 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
   const handleNativeShare = async () => {
     if (!supportsNativeShare) return;
     try {
-      await navigator.share({
+      const outcome = await shareNativeContent({
         title: `${post.authorName} · Hostel Friend`,
         text: previewText,
         url: shareUrl,
+        dialogTitle: 'Share Hostel Friend Post',
       });
-      playSound('ui-tap');
-      onClose();
-    } catch (err) {
-      const name = (err as { name?: string })?.name || '';
-      if (name === 'AbortError') return;
-      // If navigator.share is blocked by iframe policy, copy link as helpful fallback
+      if (outcome === 'shared') {
+        playSound('ui-tap');
+        onClose();
+      } else if (outcome === 'unsupported') {
+        await handleCopyLink();
+      }
+    } catch {
+      // If system share fails or is blocked by policy, copy link as helpful fallback
       await handleCopyLink();
     }
   };
@@ -153,7 +163,13 @@ export function SharePostModal({ open, post, onClose }: SharePostModalProps) {
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => playSound('ui-tap')}
+              onClick={(e) => {
+                playSound('ui-tap');
+                if (isNativePlatform()) {
+                  e.preventDefault();
+                  void openExternalUrl(whatsappUrl);
+                }
+              }}
               className="w-full min-h-[46px] px-4 rounded-xl bg-[#25D366]/15 border border-[#25D366]/40 hover:bg-[#25D366]/25 text-ink text-sm font-semibold flex items-center justify-between transition-colors"
             >
               <span className="flex items-center gap-2.5">

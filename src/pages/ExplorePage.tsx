@@ -61,6 +61,7 @@ import {
 } from '../utils/exploreHelpers';
 import { formatCount } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 
 interface ExplorePageProps {
   initialHashtag?: string;
@@ -132,6 +133,8 @@ export function ExplorePage({
 
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [sharePost, setSharePost] = useState<Post | null>(null);
+
+  useModalBackHandler(Boolean(selectedPost), () => setSelectedPost(null));
 
   const [userReactions, setUserReactions] = useState<Map<string, ReactionType>>(
     () => new Map()

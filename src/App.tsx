@@ -1,10 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { App as CapApp } from '@capacitor/app';
 import { Analytics } from '@vercel/analytics/react';
 import { Compass, Film, LogIn, TrendingUp } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 import { ToastProvider, useToast } from './context/ToastContext';
+import { consumeTopBackHandler } from './lib/backNavigation';
 import { formatUserFriendlyError } from './lib/firestoreError';
-import { normalizeNotificationType } from './services/notificationService';
+import { hideNativeSplashScreen, syncNativeStatusBar } from './lib/nativeBridge';
+import { isAndroidNative, isNativePlatform } from './lib/nativePlatform';
+import { subscribeNativeNotificationTap } from './services/fcmService';
+import {
+  buildNotificationActionUrl,
+  normalizeNotificationType,
+} from './services/notificationService';
 import { getUserProfile } from './services/userService';
 import { AppView, NotificationItem, UserProfile } from './types';
 import { Layout } from './components/Layout';
@@ -80,6 +89,20 @@ function buildHistoryUrl(snap: RouteSnapshot): string {
   return `/?${params.toString()}`;
 }
 
+function extractRouteTarget(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  try {
+    if (/^https?:\/\//i.test(trimmed)) {
+      const parsed = new URL(trimmed);
+      return `${parsed.pathname}${parsed.search}`;
+    }
+  } catch {
+    // Fall back to treating input as a relative route
+  }
+  return trimmed;
+}
+
 function HostelverseRouter() {
   const {
     firebaseUser,
@@ -95,6 +118,7 @@ function HostelverseRouter() {
     signInWithGoogle,
     logout,
   } = useAuth();
+  const { activeTheme } = useTheme();
   const { showToast } = useToast();
 
   const [view, setView] = useState<AppView>('landing');
@@ -112,6 +136,15 @@ function HostelverseRouter() {
   const [connectingGoogle, setConnectingGoogle] = useState(false);
 
   const initializedRouteRef = useRef(false);
+  const historyDepthRef = useRef(0);
+  const pendingNativeRouteRef = useRef<string | null>(null);
+  const viewRef = useRef<AppView>(view);
+  const profileRef = useRef<UserProfile | null>(profile);
+  const authBlockedRef = useRef(false);
+
+  viewRef.current = view;
+  profileRef.current = profile;
+  authBlockedRef.current = Boolean(firebaseUser && (needsVerification || needsOnboarding));
 
   const applyRouteSnapshot = useCallback(
     (snap: RouteSnapshot, historyMode: 'push' | 'replace' | 'none' = 'push') => {
@@ -137,8 +170,12 @@ function HostelverseRouter() {
         const currentUrl = `${window.location.pathname}${window.location.search}`;
         if (historyMode === 'replace') {
           window.history.replaceState(snap, '', targetUrl);
+          if (snap.view === 'landing') {
+            historyDepthRef.current = 0;
+          }
         } else if (currentUrl !== targetUrl) {
           window.history.pushState(snap, '', targetUrl);
+          historyDepthRef.current += 1;
         }
       }
     },
@@ -278,7 +315,15 @@ function HostelverseRouter() {
 
     // Handle auth transitions (login / logout)
     if (firebaseUser && profile && (view === 'landing' || view === 'auth')) {
+      historyDepthRef.current = 0;
       applyRouteSnapshot({ view: 'feed' }, 'replace');
+    }
+
+    // Flush any buffered native notification tap once user profile finishes loading
+    if (firebaseUser && profile && !needsVerification && !needsOnboarding && pendingNativeRouteRef.current) {
+      const target = pendingNativeRouteRef.current;
+      pendingNativeRouteRef.current = null;
+      applyDeepLink(target, 'push');
     }
   }, [
     authReady,
@@ -289,12 +334,75 @@ function HostelverseRouter() {
     view,
     parseLocationToSnapshot,
     applyRouteSnapshot,
+    applyDeepLink,
   ]);
+
+  // Keep native Android StatusBar synced with current theme contrast
+  useEffect(() => {
+    void syncNativeStatusBar(activeTheme);
+  }, [activeTheme]);
+
+  // Dismiss native SplashScreen once auth hydration finishes (with failsafe timeout)
+  useEffect(() => {
+    if (authReady) {
+      void hideNativeSplashScreen();
+      return;
+    }
+    const failsafeTimer = window.setTimeout(() => {
+      void hideNativeSplashScreen();
+    }, 4000);
+    return () => window.clearTimeout(failsafeTimer);
+  }, [authReady]);
+
+  // Android hardware back-button handler:
+  // 1) topmost open modal/drawer -> 2) router history -> 3) root view -> 4) minimize app
+  useEffect(() => {
+    if (!isAndroidNative()) return;
+    let disposed = false;
+    let backHandle: { remove: () => Promise<void> } | null = null;
+
+    void CapApp.addListener('backButton', () => {
+      if (consumeTopBackHandler()) {
+        return;
+      }
+      if (historyDepthRef.current > 0) {
+        window.history.back();
+        return;
+      }
+      const rootView: AppView = authBlockedRef.current
+        ? 'auth'
+        : profileRef.current
+        ? 'feed'
+        : 'landing';
+      if (viewRef.current !== rootView) {
+        applyRouteSnapshot({ view: rootView }, 'replace');
+        return;
+      }
+      void CapApp.minimizeApp();
+    })
+      .then((handle) => {
+        if (disposed) {
+          void handle.remove().catch(() => {});
+        } else {
+          backHandle = handle;
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      disposed = true;
+      if (backHandle) {
+        void backHandle.remove().catch(() => {});
+        backHandle = null;
+      }
+    };
+  }, [applyRouteSnapshot]);
 
   // Browser Back & Forward button integration
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onPopState = (event: PopStateEvent) => {
+      historyDepthRef.current = Math.max(0, historyDepthRef.current - 1);
       setDetailPostId(null);
       setDetailCommentId(undefined);
 
@@ -347,7 +455,9 @@ function HostelverseRouter() {
 
   // Listen for push notification click messages sent by the unified service worker or FCM SW
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    if (isNativePlatform() || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+      return;
+    }
     const onSwMessage = (event: MessageEvent) => {
       const payload = event.data as
         | {
@@ -377,6 +487,33 @@ function HostelverseRouter() {
     return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
   }, [applyDeepLink]);
 
+  // Listen for native Android notification taps and deep-navigate directly to the target screen
+  useEffect(() => {
+    if (!isAndroidNative() || !authReady) return;
+    return subscribeNativeNotificationTap((payload) => {
+      const data = payload.data || {};
+      const rawLink = payload.link || data.actionUrl || '';
+      const resolved =
+        extractRouteTarget(rawLink) ||
+        buildNotificationActionUrl({
+          type: data.type as NotificationItem['type'],
+          actorId: data.actorId,
+          postId: data.relatedPostId || data.postId || '',
+          relatedPostId: data.relatedPostId || data.postId || '',
+          relatedCommentId: data.relatedCommentId,
+          relatedConversationId: data.relatedConversationId,
+          relatedRequestId: data.relatedRequestId,
+        });
+
+      const targetRoute = resolved || '/?view=notifications';
+      if (!profileRef.current || authBlockedRef.current) {
+        pendingNativeRouteRef.current = targetRoute;
+        return;
+      }
+      applyDeepLink(targetRoute, 'push');
+    });
+  }, [authReady, applyDeepLink]);
+
   const requireAuth = (mode: 'login' | 'signup' = 'login') => {
     setAuthInitialMode(mode);
     applyRouteSnapshot({ view: 'auth' }, 'push');
@@ -390,6 +527,7 @@ function HostelverseRouter() {
       showToast({ type: 'success', title: 'Google account connected' });
     } catch (err) {
       const code = (err as { code?: string })?.code || '';
+      const msg = String((err as { message?: string })?.message || '').toLowerCase();
       if (code === 'auth/popup-blocked') {
         requireAuth('signup');
         showToast({
@@ -397,7 +535,13 @@ function HostelverseRouter() {
           title: 'Allow pop-ups to connect Google',
           description: 'Tap Continue with Google below to finish connecting your account.',
         });
-      } else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
+      } else if (
+        code !== 'auth/popup-closed-by-user' &&
+        code !== 'auth/cancelled-popup-request' &&
+        !msg.includes('cancel') &&
+        !msg.includes('dismiss') &&
+        !msg.includes('12501')
+      ) {
         showToast({
           type: 'error',
           title: 'Could not connect Google account',
@@ -588,8 +732,8 @@ function HostelverseRouter() {
   if (!profile) {
     return (
       <div className="min-h-screen text-ink overflow-x-clip">
-        <header className="sticky top-0 z-30 h-14 sm:h-16 glass-nav border-b border-hairline">
-          <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-full flex items-center justify-between gap-3">
+        <header className="sticky top-0 z-30 glass-nav border-b border-hairline pt-[env(safe-area-inset-top)]">
+          <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => applyRouteSnapshot({ view: 'landing' }, 'push')}
@@ -871,7 +1015,7 @@ export default function App() {
       <AuthProvider>
         <HostelverseRouter />
         <OfflineIndicator />
-        <Analytics />
+        {!isNativePlatform() && <Analytics />}
       </AuthProvider>
     </ToastProvider>
   );

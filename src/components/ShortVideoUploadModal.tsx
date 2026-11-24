@@ -30,6 +30,7 @@ import {
 import { createPost, fetchPostById } from '../services/postService';
 import { Avatar } from './Avatar';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { parseHashtags } from '../utils/formatters';
 import { playSound } from '../utils/soundVfx';
 
@@ -178,6 +179,8 @@ export function ShortVideoUploadModal({
     resetAllState();
     onClose();
   };
+
+  useModalBackHandler(open, handleCloseRequest);
 
   const handleCancelTrim = () => {
     trimAbortRef.current?.abort();

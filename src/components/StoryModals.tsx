@@ -36,6 +36,7 @@ import { Avatar } from './Avatar';
 import { formatRelativeTime } from '../utils/formatters';
 import { formatStoryExpiryRemaining } from '../utils/storyViewed';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { playSound } from '../utils/soundVfx';
 
 interface AddStoryModalProps {
@@ -107,6 +108,8 @@ export function AddStoryModal({
     setCaption('');
     onClose();
   }, [uploading, clearSelection, onClose]);
+
+  useModalBackHandler(open, resetAndClose);
 
   useEffect(() => {
     if (!open) return;
@@ -705,6 +708,16 @@ export function StoryViewerModal({
       onClose();
     }
   }, [clampedIndex, stories.length, onClose]);
+
+  useModalBackHandler(Boolean(currentStory), () => {
+    if (confirmDeleteOpen) {
+      if (!deleting) setConfirmDeleteOpen(false);
+    } else if (likersOpen) {
+      setLikersOpen(false);
+    } else {
+      onClose();
+    }
+  });
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {

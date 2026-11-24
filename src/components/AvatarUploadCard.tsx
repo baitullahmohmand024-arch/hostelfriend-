@@ -8,6 +8,8 @@ import { Avatar } from './Avatar';
 import { updateUserProfile } from '../services/userService';
 import { formatBytes, uploadAvatarBlob } from '../services/mediaService';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { openExternalUrl } from '../lib/nativeBridge';
+import { isNativePlatform } from '../lib/nativePlatform';
 import { playSound } from '../utils/soundVfx';
 
 export function AvatarUploadCard() {
@@ -203,6 +205,12 @@ export function AvatarUploadCard() {
               href={blob.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (isNativePlatform()) {
+                  e.preventDefault();
+                  void openExternalUrl(blob.url);
+                }
+              }}
               className="text-xs text-accent-strong hover:underline truncate"
             >
               {blob.url}
@@ -212,6 +220,12 @@ export function AvatarUploadCard() {
             href={blob.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => {
+              if (isNativePlatform()) {
+                e.preventDefault();
+                void openExternalUrl(blob.url);
+              }
+            }}
             aria-label="Open uploaded avatar URL"
             className="text-ink-muted hover:text-ink-2 shrink-0"
           >

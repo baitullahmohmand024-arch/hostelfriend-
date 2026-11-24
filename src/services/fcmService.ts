@@ -1,6 +1,8 @@
+import { FirebaseMessaging, Importance, Visibility } from '@capacitor-firebase/messaging';
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { getMessaging, getToken, isSupported, MessagePayload, onMessage } from 'firebase/messaging';
 import { app, db } from '../lib/firebase';
+import { isAndroidNative, isNativePlatform } from '../lib/nativePlatform';
 import { FcmTokenRecord } from '../types';
 
 const TOKEN_ID_STORAGE_KEY = 'hostel_friend_fcm_token_id';
@@ -12,7 +14,16 @@ export type PushSupportState =
   | 'insecure-context'
   | 'missing-vapid';
 
+export interface NativeNotificationTapPayload {
+  link?: string;
+  data: Record<string, string>;
+}
+
+let androidChannelsPromise: Promise<void> | null = null;
+let activeForegroundBridgeCount = 0;
+
 export function detectDevicePlatform(): FcmTokenRecord['platform'] {
+  if (isAndroidNative()) return 'android-app';
   if (typeof window === 'undefined') return 'web';
   const ua = window.navigator.userAgent || '';
   const standalone =
@@ -24,6 +35,7 @@ export function detectDevicePlatform(): FcmTokenRecord['platform'] {
 }
 
 export function isIosBrowserWithoutPwa(): boolean {
+  if (isNativePlatform()) return false;
   if (typeof window === 'undefined') return false;
   const ua = window.navigator.userAgent || '';
   const isIos =
@@ -50,6 +62,13 @@ export function isValidVapidPublicKeyFormat(key: string): boolean {
 
 export async function getPushSupportState(): Promise<PushSupportState> {
   if (typeof window === 'undefined') return 'unsupported-browser';
+  if (isAndroidNative()) {
+    const res = await FirebaseMessaging.isSupported().catch(() => ({ isSupported: true }));
+    return res.isSupported ? 'supported' : 'unsupported-browser';
+  }
+  if (isNativePlatform()) {
+    return 'unsupported-browser';
+  }
   if (!window.isSecureContext && window.location.hostname !== 'localhost') {
     return 'insecure-context';
   }
@@ -75,10 +94,80 @@ export async function getPushSupportState(): Promise<PushSupportState> {
 }
 
 export function getBrowserNotificationPermission(): NotificationPermission | 'unsupported' {
+  if (isNativePlatform()) {
+    return 'default';
+  }
   if (typeof window === 'undefined' || !('Notification' in window)) {
     return 'unsupported';
   }
   return Notification.permission;
+}
+
+export async function getNotificationPermissionState(): Promise<
+  NotificationPermission | 'unsupported'
+> {
+  if (isAndroidNative()) {
+    try {
+      const status = await FirebaseMessaging.checkPermissions();
+      if (status.receive === 'granted') return 'granted';
+      if (status.receive === 'denied') return 'denied';
+      return 'default';
+    } catch {
+      return 'default';
+    }
+  }
+  if (isNativePlatform()) {
+    return 'unsupported';
+  }
+  return getBrowserNotificationPermission();
+}
+
+export async function ensureAndroidNotificationChannels(): Promise<void> {
+  if (!isAndroidNative()) return;
+  if (androidChannelsPromise) return androidChannelsPromise;
+
+  androidChannelsPromise = (async () => {
+    const channels = [
+      {
+        id: 'messages',
+        name: 'Messages',
+        description: 'Direct messages from hostel friends',
+        importance: Importance.High,
+        visibility: Visibility.Private,
+        lights: true,
+        lightColor: '#F5C542',
+        vibration: true,
+      },
+      {
+        id: 'engagement',
+        name: 'Reactions & Comments',
+        description: 'Reactions, comments, replies, mentions, and friend requests',
+        importance: Importance.Default,
+        visibility: Visibility.Public,
+        lights: true,
+        lightColor: '#F5C542',
+        vibration: true,
+      },
+      {
+        id: 'announcements',
+        name: 'Announcements',
+        description: 'Important Hostel Friend announcements and campus updates',
+        importance: Importance.High,
+        visibility: Visibility.Public,
+        lights: true,
+        lightColor: '#F5C542',
+        vibration: true,
+      },
+    ];
+
+    await Promise.all(
+      channels.map((ch) => FirebaseMessaging.createChannel(ch).catch(() => {}))
+    );
+  })().catch(() => {
+    androidChannelsPromise = null;
+  });
+
+  return androidChannelsPromise;
 }
 
 async function getActiveMessagingServiceWorker(timeoutMs = 12000): Promise<ServiceWorkerRegistration> {
@@ -144,11 +233,94 @@ async function hashTokenToDocId(token: string): Promise<string> {
   return `tok_${Math.abs(hash)}_${token.slice(-12).replace(/[^a-zA-Z0-9_-]/g, '')}`;
 }
 
+async function upsertFcmTokenRecord(uid: string, token: string): Promise<string> {
+  const tokenId = await hashTokenToDocId(token);
+  const tokenRef = doc(db, 'users', uid, 'fcmTokens', tokenId);
+  const existing = await getDoc(tokenRef).catch(() => null);
+  const platform = detectDevicePlatform();
+  const userAgent =
+    typeof navigator !== 'undefined' ? (navigator.userAgent || '').slice(0, 300) : '';
+
+  if (existing?.exists()) {
+    await setDoc(
+      tokenRef,
+      {
+        id: tokenId,
+        uid,
+        token,
+        platform,
+        userAgent,
+        createdAt: existing.data()?.createdAt || serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } else {
+    await setDoc(tokenRef, {
+      id: tokenId,
+      uid,
+      token,
+      platform,
+      userAgent,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  try {
+    localStorage.setItem(TOKEN_ID_STORAGE_KEY, tokenId);
+  } catch {
+    // Ignore storage quota errors
+  }
+
+  return tokenId;
+}
+
 export async function registerFcmTokenForUser(
   uid: string,
   promptPermission: boolean
 ): Promise<{ ok: boolean; token?: string; reason?: string }> {
   try {
+    if (isAndroidNative()) {
+      const support = await getPushSupportState();
+      if (support !== 'supported') {
+        return {
+          ok: false,
+          reason: 'Push notifications are unavailable on this Android build.',
+        };
+      }
+
+      let perm = await FirebaseMessaging.checkPermissions();
+      if (
+        (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') &&
+        promptPermission
+      ) {
+        perm = await FirebaseMessaging.requestPermissions();
+      }
+      if (perm.receive !== 'granted') {
+        return {
+          ok: false,
+          reason:
+            perm.receive === 'denied'
+              ? 'Notification permission is off in Android App Info -> Notifications. Enable it there and try again.'
+              : 'Notification permission not granted yet.',
+        };
+      }
+
+      await ensureAndroidNotificationChannels();
+      const { token } = await FirebaseMessaging.getToken();
+      if (!token) {
+        return {
+          ok: false,
+          reason:
+            'Could not obtain an Android push token. Ensure google-services.json and Google Play services are configured.',
+        };
+      }
+
+      await upsertFcmTokenRecord(uid, token);
+      return { ok: true, token };
+    }
+
     const support = await getPushSupportState();
     if (support === 'ios-needs-install') {
       return {
@@ -229,42 +401,7 @@ export async function registerFcmTokenForUser(
       return { ok: false, reason: 'Could not retrieve a device push token.' };
     }
 
-    const tokenId = await hashTokenToDocId(token);
-    const tokenRef = doc(db, 'users', uid, 'fcmTokens', tokenId);
-    const existing = await getDoc(tokenRef).catch(() => null);
-
-    if (existing?.exists()) {
-      await setDoc(
-        tokenRef,
-        {
-          id: tokenId,
-          uid,
-          token,
-          platform: detectDevicePlatform(),
-          userAgent: (navigator.userAgent || '').slice(0, 300),
-          createdAt: existing.data()?.createdAt || serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-    } else {
-      await setDoc(tokenRef, {
-        id: tokenId,
-        uid,
-        token,
-        platform: detectDevicePlatform(),
-        userAgent: (navigator.userAgent || '').slice(0, 300),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-    }
-
-    try {
-      localStorage.setItem(TOKEN_ID_STORAGE_KEY, tokenId);
-    } catch {
-      // Ignore storage quota errors
-    }
-
+    await upsertFcmTokenRecord(uid, token);
     return { ok: true, token };
   } catch (err) {
     const rawMsg = err instanceof Error ? err.message : 'Unable to register device for push alerts.';
@@ -290,14 +427,89 @@ export async function unregisterCurrentFcmToken(uid: string): Promise<void> {
       await deleteDoc(doc(db, 'users', uid, 'fcmTokens', storedTokenId)).catch(() => {});
       localStorage.removeItem(TOKEN_ID_STORAGE_KEY);
     }
+    if (isAndroidNative()) {
+      await FirebaseMessaging.deleteToken().catch(() => {});
+    }
   } catch {
     // Ignore cleanup errors on logout
   }
 }
 
+function coerceNotificationData(raw: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof v === 'string') out[k] = v;
+    else if (v !== null && v !== undefined) out[k] = String(v);
+  }
+  return out;
+}
+
 export async function subscribeForegroundPushMessages(
-  onPayload: (payload: MessagePayload) => void
+  onPayload: (payload: MessagePayload) => void,
+  uidForTokenRefresh?: string
 ): Promise<() => void> {
+  if (isAndroidNative()) {
+    if (activeForegroundBridgeCount > 0) {
+      return () => {};
+    }
+    activeForegroundBridgeCount += 1;
+    let disposed = false;
+    const handles: Array<{ remove: () => Promise<void> }> = [];
+
+    const setup = async () => {
+      try {
+        await ensureAndroidNotificationChannels();
+        const recvHandle = await FirebaseMessaging.addListener('notificationReceived', (event) => {
+          if (disposed) return;
+          const n = event.notification;
+          const data = coerceNotificationData(n.data);
+          onPayload({
+            from: '',
+            collapseKey: '',
+            messageId: n.id || '',
+            notification: {
+              title: n.title,
+              body: n.body,
+            },
+            data,
+          });
+        });
+        if (disposed) {
+          void recvHandle.remove();
+        } else {
+          handles.push(recvHandle);
+        }
+
+        if (uidForTokenRefresh) {
+          const tokenHandle = await FirebaseMessaging.addListener('tokenReceived', (event) => {
+            if (disposed || !event.token) return;
+            void upsertFcmTokenRecord(uidForTokenRefresh, event.token).catch(() => {});
+          });
+          if (disposed) {
+            void tokenHandle.remove();
+          } else {
+            handles.push(tokenHandle);
+          }
+        }
+      } catch {
+        // Ignore if FirebaseMessaging plugin is unavailable
+      }
+    };
+
+    void setup();
+
+    return () => {
+      if (disposed) return;
+      disposed = true;
+      activeForegroundBridgeCount = Math.max(0, activeForegroundBridgeCount - 1);
+      for (const h of handles) {
+        void h.remove().catch(() => {});
+      }
+      handles.length = 0;
+    };
+  }
+
   try {
     const supported = await isSupported().catch(() => false);
     if (!supported) return () => {};
@@ -306,4 +518,45 @@ export async function subscribeForegroundPushMessages(
   } catch {
     return () => {};
   }
+}
+
+let activeNativeTapBridgeCount = 0;
+
+export function subscribeNativeNotificationTap(
+  onTap: (payload: NativeNotificationTapPayload) => void
+): () => void {
+  if (!isAndroidNative() || activeNativeTapBridgeCount > 0) {
+    return () => {};
+  }
+
+  activeNativeTapBridgeCount += 1;
+  let disposed = false;
+  let tapHandle: { remove: () => Promise<void> } | null = null;
+
+  void FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+    if (disposed) return;
+    const n = event.notification;
+    onTap({
+      link: n.link,
+      data: coerceNotificationData(n.data),
+    });
+  })
+    .then((handle) => {
+      if (disposed) {
+        void handle.remove().catch(() => {});
+      } else {
+        tapHandle = handle;
+      }
+    })
+    .catch(() => {});
+
+  return () => {
+    if (disposed) return;
+    disposed = true;
+    activeNativeTapBridgeCount = Math.max(0, activeNativeTapBridgeCount - 1);
+    if (tapHandle) {
+      void tapHandle.remove().catch(() => {});
+      tapHandle = null;
+    }
+  };
 }

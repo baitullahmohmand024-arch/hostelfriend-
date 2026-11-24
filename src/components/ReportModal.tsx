@@ -3,6 +3,7 @@ import { Flag, X } from 'lucide-react';
 import { createReport } from '../services/socialService';
 import { useToast } from '../context/ToastContext';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 
 interface ReportModalProps {
   open: boolean;
@@ -36,6 +37,12 @@ export function ReportModal({
   const [reason, setReason] = useState(REPORT_REASONS[0]);
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useModalBackHandler(open, () => {
+    if (!submitting) {
+      onClose();
+    }
+  });
 
   if (!open) return null;
 

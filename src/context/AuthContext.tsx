@@ -1,11 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  linkWithCredential,
   linkWithPopup,
   onAuthStateChanged,
   reload,
   sendEmailVerification,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -14,6 +18,7 @@ import {
 } from 'firebase/auth';
 import { DocumentSnapshot } from 'firebase/firestore';
 import { auth, googleProvider, testFirestoreConnection } from '../lib/firebase';
+import { isNativePlatform } from '../lib/nativePlatform';
 import {
   checkIsAdmin,
   createUserProfileAndSettings,
@@ -33,7 +38,7 @@ import {
   updateNotificationPreferences,
 } from '../services/notificationService';
 import {
-  getBrowserNotificationPermission,
+  getNotificationPermissionState,
   registerFcmTokenForUser,
   subscribeForegroundPushMessages,
   unregisterCurrentFcmToken,
@@ -348,41 +353,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!authReady || !firebaseUser || !profile) return;
 
-    const syncTokenIfReady = () => {
-      const permission = getBrowserNotificationPermission();
+    const syncTokenIfReady = async () => {
+      const permission = await getNotificationPermissionState();
       if (permission === 'granted' && prefsRef.current?.pushEnabled === true) {
         void registerFcmTokenForUser(firebaseUser.uid, false);
       }
     };
 
-    syncTokenIfReady();
+    void syncTokenIfReady();
 
     const onControllerChange = () => {
-      syncTokenIfReady();
+      void syncTokenIfReady();
     };
-    const swContainer = typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined;
+    const swContainer =
+      !isNativePlatform() && typeof navigator !== 'undefined'
+        ? navigator.serviceWorker
+        : undefined;
     swContainer?.addEventListener?.('controllerchange', onControllerChange);
 
     let unsubFcm = () => {};
     let active = true;
 
-    void subscribeForegroundPushMessages((payload) => {
-      if (!active) return;
-      const notifType = payload.data?.type;
-      if (
-        notifType &&
-        !isNotificationEnabledForPreferences(notifType as NotificationItem['type'], prefsRef.current)
-      ) {
-        return;
-      }
-      const title = payload.notification?.title || payload.data?.title || 'Hostel Friend';
-      const description = payload.notification?.body || payload.data?.body || '';
-      showToast({
-        type: 'info',
-        title,
-        description: description || undefined,
-      });
-    }).then((unsub) => {
+    void subscribeForegroundPushMessages(
+      (payload) => {
+        if (!active) return;
+        const notifType = payload.data?.type;
+        if (
+          notifType &&
+          !isNotificationEnabledForPreferences(
+            notifType as NotificationItem['type'],
+            prefsRef.current
+          )
+        ) {
+          return;
+        }
+        const title = payload.notification?.title || payload.data?.title || 'Hostel Friend';
+        const description = payload.notification?.body || payload.data?.body || '';
+        showToast({
+          type: 'info',
+          title,
+          description: description || undefined,
+        });
+      },
+      firebaseUser.uid
+    ).then((unsub) => {
       if (active) {
         unsubFcm = unsub;
       } else {
@@ -460,7 +474,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, [firebaseUser]);
 
+  const acquireNativeGoogleIdToken = async (): Promise<string> => {
+    const attemptSignIn = async (useCredentialManager: boolean) =>
+      FirebaseAuthentication.signInWithGoogle({
+        skipNativeAuth: true,
+        useCredentialManager,
+      });
+
+    let nativeResult;
+    try {
+      nativeResult = await attemptSignIn(true);
+    } catch (err) {
+      const msg = String((err as { message?: string })?.message || err || '').toLowerCase();
+      const isUserCancel =
+        msg.includes('cancel') ||
+        msg.includes('dismiss') ||
+        msg.includes('12501') ||
+        msg.includes('16');
+      const shouldFallbackLegacy =
+        !isUserCancel &&
+        (msg.includes('no credential') ||
+          msg.includes('credential manager') ||
+          msg.includes('not available') ||
+          msg.includes('unsupported'));
+
+      if (shouldFallbackLegacy) {
+        nativeResult = await attemptSignIn(false);
+      } else {
+        throw err;
+      }
+    }
+
+    const idToken = nativeResult?.credential?.idToken;
+    if (!idToken) {
+      throw new Error(
+        'Google sign-in did not return an ID token. Verify google-services.json and SHA fingerprints in Firebase Console.'
+      );
+    }
+    return idToken;
+  };
+
   const signInWithGoogle = async () => {
+    if (isNativePlatform()) {
+      const idToken = await acquireNativeGoogleIdToken();
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await signInWithCredential(auth, credential);
+      await result.user.getIdToken(true);
+      await loadUserRecords(result.user);
+      return;
+    }
     const result = await signInWithPopup(auth, googleProvider);
     await result.user.getIdToken(true);
     await loadUserRecords(result.user);
@@ -468,6 +530,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const linkGoogleAccount = async () => {
     if (!auth.currentUser) throw new Error('Please sign in first.');
+    if (isNativePlatform()) {
+      const idToken = await acquireNativeGoogleIdToken();
+      const credential = GoogleAuthProvider.credential(idToken);
+      const result = await linkWithCredential(auth.currentUser, credential);
+      await result.user.getIdToken(true);
+      setFirebaseUser({ ...result.user } as User);
+      await loadUserRecords(result.user);
+      return;
+    }
     const result = await linkWithPopup(auth.currentUser, googleProvider);
     await result.user.getIdToken(true);
     setFirebaseUser({ ...result.user } as User);
@@ -591,6 +662,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOlderNotifications([]);
     setFriendRequests([]);
     setFollowingIds(new Set());
+    if (isNativePlatform()) {
+      await FirebaseAuthentication.signOut().catch(() => {});
+    }
     await signOut(auth);
   };
 

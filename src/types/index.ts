@@ -227,7 +227,7 @@ export interface FcmTokenRecord {
   id: string;
   uid: string;
   token: string;
-  platform: 'web' | 'android-pwa' | 'ios-pwa';
+  platform: 'web' | 'android-pwa' | 'ios-pwa' | 'android-app';
   userAgent: string;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;

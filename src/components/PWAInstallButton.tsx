@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Share, Smartphone, X } from 'lucide-react';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { isNativePlatform } from '../lib/nativePlatform';
 
 interface PWAInstallButtonProps {
   variant?: 'sidebar' | 'compact' | 'card';
@@ -14,7 +15,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [showGuide, setShowGuide] = useState(false);
 
-  if (isInstalled) {
+  if (isNativePlatform() || isInstalled) {
     return null;
   }
 

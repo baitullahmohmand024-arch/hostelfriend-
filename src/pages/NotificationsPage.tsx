@@ -32,9 +32,11 @@ import {
 } from '../services/notificationService';
 import {
   getBrowserNotificationPermission,
+  getNotificationPermissionState,
   getPushSupportState,
   PushSupportState,
 } from '../services/fcmService';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { Avatar } from '../components/Avatar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { formatRelativeTime } from '../utils/formatters';
@@ -99,9 +101,11 @@ export function NotificationsPage({
   const [pushSupport, setPushSupport] = useState<PushSupportState>('supported');
 
   useEffect(() => {
-    setBrowserPermission(getBrowserNotificationPermission());
+    void getNotificationPermissionState().then(setBrowserPermission);
     void getPushSupportState().then(setPushSupport);
   }, []);
+
+  useModalBackHandler(Boolean(selectedAnnouncement), () => setSelectedAnnouncement(null));
 
   const filteredItems = useMemo(() => {
     return notifications.filter((item) => {
@@ -253,7 +257,7 @@ export function NotificationsPage({
     setEnablingPush(true);
     try {
       const res = await enablePushNotifications();
-      setBrowserPermission(getBrowserNotificationPermission());
+      void getNotificationPermissionState().then(setBrowserPermission);
       void getPushSupportState().then(setPushSupport);
       if (res.ok) {
         showToast({ type: 'success', title: 'Push notifications enabled for this device' });

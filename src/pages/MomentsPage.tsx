@@ -41,6 +41,7 @@ import { formatCount, formatRelativeTime } from '../utils/formatters';
 import { computeNextReactionState, getTopReactionsSummary } from '../utils/reactions';
 import { playSound } from '../utils/soundVfx';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 
 type MomentsTab = 'for-you' | 'following' | 'latest';
 
@@ -128,6 +129,8 @@ export function MomentsPage({
   const tapFeedbackTimerRef = useRef<number | null>(null);
 
   userPausedRef.current = userPaused;
+
+  useModalBackHandler(Boolean(commentsPost), () => setCommentsPost(null));
 
   useEffect(() => {
     if (!profile?.uid) {
@@ -1290,7 +1293,7 @@ export function MomentsPage({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-md h-[72dvh] sm:max-h-[580px] glass-modal hf-modal-enter rounded-t-3xl sm:rounded-3xl border border-hairline-strong flex flex-col overflow-hidden"
+            className="w-full sm:max-w-md h-[72dvh] sm:max-h-[580px] glass-modal hf-modal-enter rounded-t-3xl sm:rounded-3xl border border-hairline-strong flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] sm:pb-0"
           >
             <div className="px-5 py-4 border-b border-hairline flex items-center justify-between bg-surface-2/80">
               <div>

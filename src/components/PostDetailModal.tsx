@@ -13,6 +13,7 @@ import {
 import { Post, ReactionType } from '../types';
 import { computeNextReactionState } from '../utils/reactions';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { PostCard } from './PostCard';
 
 interface PostDetailModalProps {
@@ -41,6 +42,8 @@ export function PostDetailModal({
   const [notFound, setNotFound] = useState(false);
   const [userReaction, setUserReaction] = useState<ReactionType | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+
+  useModalBackHandler(Boolean(postId), onClose);
 
   useEffect(() => {
     if (!postId) {

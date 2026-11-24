@@ -24,9 +24,11 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import {
   getBrowserNotificationPermission,
+  getNotificationPermissionState,
   getPushSupportState,
   PushSupportState,
 } from '../services/fcmService';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { Avatar } from './Avatar';
 import { PWAInstallButton } from './PWAInstallButton';
 import {
@@ -89,9 +91,12 @@ export function Layout({
   }, []);
 
   useEffect(() => {
-    setBrowserPerm(getBrowserNotificationPermission());
+    void getNotificationPermissionState().then(setBrowserPerm);
     void getPushSupportState().then(setPushSupport);
   }, [activeView, notificationPreferences?.pushEnabled]);
+
+  useModalBackHandler(accountMenuOpen, () => setAccountMenuOpen(false));
+  useModalBackHandler(mobileSearchOpen, () => setMobileSearchOpen(false));
 
   useEffect(() => {
     setAccountMenuOpen(false);
@@ -154,7 +159,7 @@ export function Layout({
     setEnablingPush(true);
     try {
       const res = await enablePushNotifications();
-      setBrowserPerm(getBrowserNotificationPermission());
+      void getNotificationPermissionState().then(setBrowserPerm);
       void getPushSupportState().then(setPushSupport);
       if (res.ok) {
         showToast({
@@ -216,8 +221,8 @@ export function Layout({
   return (
     <div className="min-h-screen text-ink flex flex-col overflow-x-clip">
       {/* Unified Sticky Application Header (Mobile + Tablet + Desktop) */}
-      <header className="sticky top-0 z-30 h-[54px] md:h-16 glass-nav border-b border-hairline">
-        <div className="h-full px-3 sm:px-5 lg:px-6 flex items-center justify-between gap-2.5 sm:gap-4">
+      <header className="sticky top-0 z-30 glass-nav border-b border-hairline pt-[env(safe-area-inset-top)]">
+        <div className="h-[54px] md:h-16 px-3 sm:px-5 lg:px-6 flex items-center justify-between gap-2.5 sm:gap-4">
           {/* Left: Brand Logo & Name */}
           <button
             type="button"
@@ -535,7 +540,7 @@ export function Layout({
       {/* Desktop & Tablet Left Sidebar */}
       <aside
         aria-label="Desktop navigation"
-        className="hidden md:flex md:flex-col md:w-20 lg:w-60 md:fixed md:top-16 md:bottom-0 md:left-0 glass-nav border-r border-hairline z-20"
+        className="hidden md:flex md:flex-col md:w-20 lg:w-60 md:fixed md:top-[calc(4rem+env(safe-area-inset-top))] md:bottom-0 md:left-0 glass-nav border-r border-hairline z-20"
       >
         <nav className="flex-1 px-3 py-5 space-y-1.5 overflow-y-auto" aria-label="Primary navigation">
           {sidebarNav.map((item) => {

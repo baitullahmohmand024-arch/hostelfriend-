@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isNativePlatform } from '../lib/nativePlatform';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -6,11 +7,17 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function usePWAInstall() {
+  const nativeApp = isNativePlatform();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstalled, setIsInstalled] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(nativeApp);
   const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
+    if (nativeApp) {
+      setIsInstalled(true);
+      return;
+    }
+
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
@@ -39,10 +46,10 @@ export function usePWAInstall() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [nativeApp]);
 
   const install = async (): Promise<boolean> => {
-    if (!deferredPrompt) return false;
+    if (nativeApp || !deferredPrompt) return false;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Crop, RotateCw, RotateCcw, X, ZoomIn } from 'lucide-react';
 import { AspectRatioType } from '../types';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { DEFAULT_CROP_CONFIG, ImageCropConfig } from '../utils/postComposerHelpers';
 
 interface MediaCropModalProps {
@@ -34,6 +35,8 @@ export function MediaCropModal({
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number }>({ w: 4, h: 3 });
   const dragStartRef = useRef<{ clientX: number; clientY: number; panX: number; panY: number } | null>(null);
+
+  useModalBackHandler(open && Boolean(file), onClose);
 
   useEffect(() => {
     setConfig(initialConfig);

@@ -12,6 +12,9 @@ import {
   X,
 } from 'lucide-react';
 import { PWAInstallButton } from '../components/PWAInstallButton';
+import { useModalBackHandler } from '../lib/backNavigation';
+import { openExternalUrl } from '../lib/nativeBridge';
+import { isNativePlatform } from '../lib/nativePlatform';
 
 interface LandingPageProps {
   onCreateAccount: () => void;
@@ -75,6 +78,9 @@ export function LandingPage({
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
   const [devImgFailed, setDevImgFailed] = useState(false);
 
+  useModalBackHandler(showDeveloperModal, () => setShowDeveloperModal(false));
+  useModalBackHandler(Boolean(lightboxPhoto), () => setLightboxPhoto(null));
+
   useEffect(() => {
     if (!showDeveloperModal && !lightboxPhoto) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,9 +94,9 @@ export function LandingPage({
   }, [showDeveloperModal, lightboxPhoto]);
 
   return (
-    <div className="min-h-screen bg-canvas text-ink overflow-x-clip">
+    <div className="min-h-screen bg-canvas text-ink overflow-x-clip pb-[env(safe-area-inset-bottom)]">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-canvas/90 backdrop-blur-xl border-b border-hairline">
+      <header className="sticky top-0 z-40 bg-canvas/90 backdrop-blur-xl border-b border-hairline pt-[env(safe-area-inset-top)]">
         <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-2 sm:gap-4">
           <a href="#top" className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink">
             <img
@@ -541,6 +547,14 @@ export function LandingPage({
                     href="https://wa.me/923439406862?text=Assalam-o-Alaikum%2C%20I%20need%20some%20information%20about%20Hostel%20Friend."
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (isNativePlatform()) {
+                        e.preventDefault();
+                        void openExternalUrl(
+                          'https://wa.me/923439406862?text=Assalam-o-Alaikum%2C%20I%20need%20some%20information%20about%20Hostel%20Friend.'
+                        );
+                      }
+                    }}
                     className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-5 py-3 rounded-xl bg-[#25D366] hover:bg-[#20BD5A] active:bg-[#1DA851] text-[#041209] font-semibold text-sm transition-colors whitespace-nowrap shrink-0 shadow-lg shadow-[#25D366]/15"
                   >
                     <svg

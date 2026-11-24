@@ -18,6 +18,7 @@ import {
 import { updateNotificationPreferences } from '../services/notificationService';
 import {
   getBrowserNotificationPermission,
+  getNotificationPermissionState,
   getPushSupportState,
   PushSupportState,
   unregisterCurrentFcmToken,
@@ -30,6 +31,7 @@ import { PWAInstallButton } from '../components/PWAInstallButton';
 import { ThemeCustomizationCard } from '../components/ThemeCustomizationCard';
 import { sanitizeUsername } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { isAndroidNative, isNativePlatform } from '../lib/nativePlatform';
 import {
   isSoundVfxEnabled,
   playSound,
@@ -84,8 +86,8 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
   );
 
   useEffect(() => {
-    getPushSupportState().then(setPushSupport);
-    setBrowserPerm(getBrowserNotificationPermission());
+    void getPushSupportState().then(setPushSupport);
+    void getNotificationPermissionState().then(setBrowserPerm);
     const unsubSound = subscribeSoundPreference(setSoundEnabled);
     return () => {
       unsubSound();
@@ -125,11 +127,21 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       await linkGoogleAccount();
       showToast({ type: 'success', title: 'Google account connected' });
     } catch (err) {
-      showToast({
-        type: 'error',
-        title: 'Could not connect Google account',
-        description: formatUserFriendlyError(err),
-      });
+      const code = (err as { code?: string })?.code || '';
+      const msg = String((err as { message?: string })?.message || '').toLowerCase();
+      const isCancelled =
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request' ||
+        msg.includes('cancel') ||
+        msg.includes('dismiss') ||
+        msg.includes('12501');
+      if (!isCancelled) {
+        showToast({
+          type: 'error',
+          title: 'Could not connect Google account',
+          description: formatUserFriendlyError(err),
+        });
+      }
     } finally {
       setLinkingGoogle(false);
     }
@@ -220,7 +232,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
     try {
       if (nextEnabled) {
         const res = await enablePushNotifications();
-        setBrowserPerm(getBrowserNotificationPermission());
+        void getNotificationPermissionState().then(setBrowserPerm);
         void getPushSupportState().then(setPushSupport);
         if (!res.ok) {
           showToast({
@@ -237,7 +249,7 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
         await unregisterCurrentFcmToken(profile.uid);
         const updated = await updateNotificationPreferences(profile.uid, { pushEnabled: false });
         setNotificationPreferences(updated);
-        setBrowserPerm(getBrowserNotificationPermission());
+        void getNotificationPermissionState().then(setBrowserPerm);
         showToast({ type: 'info', title: 'Push notifications disabled on this device' });
       }
     } catch {
@@ -502,7 +514,9 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
               <BellRing className="w-4 h-4 text-accent-strong shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-ink-2">
-                  Push Notifications (Web & Android PWA)
+                  {isAndroidNative()
+                    ? 'Push Notifications (Android App)'
+                    : 'Push Notifications (Web & Android PWA)'}
                 </p>
                 <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">
                   {pushSupport === 'ios-needs-install'
@@ -512,7 +526,9 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
                     : pushSupport === 'unsupported-browser'
                     ? 'Your current browser or embedded preview frame blocks PushManager.'
                     : browserPerm === 'denied'
-                    ? 'Notifications are blocked in your browser site settings. Re-enable them in browser permissions.'
+                    ? isAndroidNative()
+                      ? 'Notifications are off in Android App Info -> Notifications. Re-enable them in Android system settings.'
+                      : 'Notifications are blocked in your browser site settings. Re-enable them in browser permissions.'
                     : notificationPreferences?.pushEnabled && browserPerm === 'granted'
                     ? 'Active on this device. You will receive push alerts for enabled categories.'
                     : 'Receive real-time alerts even when the app is minimized or closed.'}
@@ -603,15 +619,17 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-hairline flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm text-ink-2">Mobile & Desktop App</p>
-              <p className="text-xs text-ink-muted">
-                Install Hostel Friend on your home screen for fast app launch
-              </p>
+          {!isNativePlatform() && (
+            <div className="pt-3 border-t border-hairline flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-ink-2">Mobile & Desktop App</p>
+                <p className="text-xs text-ink-muted">
+                  Install Hostel Friend on your home screen for fast app launch
+                </p>
+              </div>
+              <PWAInstallButton variant="card" />
             </div>
-            <PWAInstallButton variant="card" />
-          </div>
+          )}
         </div>
       </div>
 

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" class="dark" data-theme="black-gold">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Hostel Friend — Connect • Share • Discover</title>
+    <meta name="description" content="A social community where students connect, share photos and videos, and discover friends." />
+    <meta property="og:title" content="Hostel Friend — Connect • Share • Discover" />
+    <meta property="og:description" content="A social community where students connect, share photos and videos, and discover friends." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#050505" />
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('hf_theme_preference_v1');
+          var themeColors = {
+            'black-gold': '#050505',
+            'dark-midnight': '#060A13',
+            'ocean-blue': '#04121C',
+            'emerald-green': '#04110B',
+            'royal-purple': '#0B0714',
+            'light': '#F4F5F7'
+          };
+          var pref = raw ? JSON.parse(raw) : null;
+          var themeId = pref && pref.themeId && themeColors[pref.themeId] ? pref.themeId : 'black-gold';
+          if (pref && pref.followSystem) {
+            var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            themeId = prefersLight ? 'light' : (themeId === 'light' ? 'black-gold' : themeId);
+          }
+          var root = document.documentElement;
+          var isLight = themeId === 'light';
+          root.dataset.theme = themeId;
+          root.classList.toggle('dark', !isLight);
+          root.classList.toggle('light', isLight);
+          root.style.colorScheme = isLight ? 'light' : 'dark';
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', themeColors[themeId] || '#050505');
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Hostel Friend" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-lHCq3kvx.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BD-51Bjd.css">
+  </head>
+  <body class="bg-canvas text-ink antialiased selection:bg-accent/30 selection:text-ink">
+    <div id="root"></div>
+  </body>
+</html>

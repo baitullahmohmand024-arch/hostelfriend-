@@ -1,6 +1,7 @@
 import { getDownloadURL, ref, uploadBytesResumable, UploadTask } from 'firebase/storage';
 import type { PutBlobResult } from '@vercel/blob';
 import { auth, storage } from '../lib/firebase';
+import { getApiBaseUrl, isNativePlatform, resolveApiUrl } from '../lib/nativePlatform';
 import { AspectRatioType, MediaType } from '../types';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -1348,7 +1349,10 @@ export async function checkVercelBlobAvailable(forceRefresh = false): Promise<bo
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 1200);
     try {
-      const res = await fetch('/api/upload', { method: 'GET', signal: controller.signal });
+      const res = await fetch(resolveApiUrl('/api/upload'), {
+        method: 'GET',
+        signal: controller.signal,
+      });
       if (!res.ok) {
         writeSessionVercelBlobCache(false, Date.now());
         return false;
@@ -1405,7 +1409,10 @@ export async function checkServerMediaAvailable(forceRefresh = false): Promise<b
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 1500);
     try {
-      const res = await fetch('/api/media/status', { method: 'GET', signal: controller.signal });
+      const res = await fetch(resolveApiUrl('/api/media/status'), {
+        method: 'GET',
+        signal: controller.signal,
+      });
       if (!res.ok) {
         writeSessionServerMediaCache(false, Date.now());
         return false;
@@ -1588,7 +1595,7 @@ export function startResumableUpload(options: {
           });
         };
 
-        xhr.open('POST', `/api/media/upload?filename=${encodeURIComponent(storagePath)}`);
+        xhr.open('POST', resolveApiUrl(`/api/media/upload?filename=${encodeURIComponent(storagePath)}`));
         xhr.setRequestHeader('Content-Type', contentType);
         emitXhr('uploading', 0, file.size);
 
@@ -1631,11 +1638,15 @@ export function startResumableUpload(options: {
                 resolve({ ok: false, fallback: true, error: new Error('Server upload response missing URL.') });
                 return;
               }
+              const resolvedDownloadUrl =
+                isNativePlatform() && payload.url.startsWith('/')
+                  ? `${getApiBaseUrl()}${payload.url}`
+                  : payload.url;
               emitXhr('completed', file.size, file.size);
               resolve({
                 ok: true,
                 result: {
-                  downloadUrl: payload.url,
+                  downloadUrl: resolvedDownloadUrl,
                   storagePath: payload.pathname || storagePath,
                   bytesTransferred: file.size,
                   elapsedMs: Math.max(1, Math.round(performance.now() - overallStartedAt)),
@@ -1793,7 +1804,9 @@ export function startResumableUpload(options: {
           });
         };
 
-        const uploadEndpoint = folder === 'avatars' ? '/api/avatar/upload' : '/api/upload';
+        const uploadEndpoint = resolveApiUrl(
+          folder === 'avatars' ? '/api/avatar/upload' : '/api/upload'
+        );
         xhr.open('POST', `${uploadEndpoint}?filename=${encodeURIComponent(storagePath)}`);
         xhr.setRequestHeader('Content-Type', contentType);
         emitXhr('uploading', 0, file.size);

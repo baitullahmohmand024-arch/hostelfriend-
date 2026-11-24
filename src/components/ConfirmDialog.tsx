@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useModalBackHandler } from '../lib/backNavigation';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -21,6 +22,12 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  useModalBackHandler(open, () => {
+    if (!loading) {
+      onCancel();
+    }
+  });
+
   if (!open) return null;
 
   return (

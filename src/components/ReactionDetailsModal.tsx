@@ -3,6 +3,7 @@ import { Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
 import { Post, PostReaction, ReactionType } from '../types';
 import { fetchPostReactions } from '../services/postService';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { formatCount, formatRelativeTime } from '../utils/formatters';
 import {
   getReactionMeta,
@@ -33,6 +34,8 @@ export function ReactionDetailsModal({
   const [reloadTick, setReloadTick] = useState(0);
 
   const summary = useMemo(() => getTopReactionsSummary(post, 6), [post]);
+
+  useModalBackHandler(open, onClose);
 
   useEffect(() => {
     if (!open) return;

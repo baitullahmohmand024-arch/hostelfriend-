@@ -21,6 +21,7 @@ import {
   Play,
   RefreshCw,
   Settings,
+  Share2,
   ShieldAlert,
   UserCheck,
   UserPlus,
@@ -64,6 +65,9 @@ import { ProfilePageSkeleton } from '../components/Skeletons';
 import { ReportModal } from '../components/ReportModal';
 import { formatCount, formatRelativeTime } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
+import { shareNativeContent } from '../lib/nativeBridge';
+import { getPublicAppUrl, isNativePlatform } from '../lib/nativePlatform';
 import { playSound } from '../utils/soundVfx';
 import defaultCoverImg from '../assets/images/default_cover_obsidian_1794541690832.jpg';
 
@@ -268,6 +272,9 @@ export function ProfilePage({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [moreMenuOpen]);
+
+  useModalBackHandler(moreMenuOpen, () => setMoreMenuOpen(false));
+  useModalBackHandler(Boolean(fallbackPreviewPost), () => setFallbackPreviewPost(null));
 
   // Close guest fallback lightbox on Escape
   useEffect(() => {
@@ -607,13 +614,15 @@ export function ProfilePage({
     }
   };
 
+  const buildProfileShareUrl = (target: UserProfile): string =>
+    typeof window !== 'undefined'
+      ? `${getPublicAppUrl()}/?view=profile&uid=${encodeURIComponent(target.uid)}`
+      : `@${target.username}`;
+
   const handleCopyProfileLink = async () => {
     setMoreMenuOpen(false);
     if (!member) return;
-    const shareUrl =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}/?u=${encodeURIComponent(member.username)}`
-        : `@${member.username}`;
+    const shareUrl = buildProfileShareUrl(member);
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(shareUrl);
@@ -623,6 +632,27 @@ export function ProfilePage({
       }
     } catch {
       showToast({ type: 'info', title: `@${member.username}`, description: shareUrl });
+    }
+  };
+
+  const handleShareProfile = async () => {
+    setMoreMenuOpen(false);
+    if (!member) return;
+    const shareUrl = buildProfileShareUrl(member);
+    try {
+      const outcome = await shareNativeContent({
+        title: `${member.fullName} (@${member.username}) · Hostel Friend`,
+        text: `Connect with ${member.fullName} (@${member.username}) on Hostel Friend`,
+        url: shareUrl,
+        dialogTitle: `Share @${member.username}'s Profile`,
+      });
+      if (outcome === 'shared') {
+        playSound('ui-tap');
+      } else if (outcome === 'unsupported') {
+        await handleCopyProfileLink();
+      }
+    } catch {
+      await handleCopyProfileLink();
     }
   };
 
@@ -1080,6 +1110,20 @@ export function ProfilePage({
                         role="menu"
                         className="absolute right-0 mt-2 w-52 rounded-xl glass-popover hf-popover-enter py-1.5 z-30"
                       >
+                        {(isNativePlatform() ||
+                          (typeof navigator !== 'undefined' &&
+                            typeof navigator.share === 'function')) && (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => void handleShareProfile()}
+                            className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-ink hover:bg-hover-tint flex items-center gap-2.5 transition-colors"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-accent" />
+                            <span>Share Profile</span>
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           role="menuitem"

@@ -17,6 +17,7 @@ import { uploadMediaFile, validateMediaFile } from '../services/mediaService';
 import { Avatar } from './Avatar';
 import { sanitizeUsername } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { useModalBackHandler } from '../lib/backNavigation';
 import { playSound } from '../utils/soundVfx';
 import defaultCoverImg from '../assets/images/default_cover_obsidian_1794541690832.jpg';
 
@@ -86,6 +87,12 @@ export function EditProfileModal({
       if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl);
     };
   }, [coverPreviewUrl]);
+
+  useModalBackHandler(open, () => {
+    if (!saving && !uploadingTarget) {
+      onClose();
+    }
+  });
 
   // Close on Escape when not busy
   useEffect(() => {
