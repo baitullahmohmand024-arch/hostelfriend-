@@ -1,4 +1,3 @@
-
 name: Build Hostel Friend Android APK
 
 on:
@@ -82,13 +81,22 @@ jobs:
           APK="android/app/build/outputs/apk/debug/app-debug.apk"
           VERIFY_DIR="$(mktemp -d)"
           trap 'rm -rf "$VERIFY_DIR"' EXIT
+
+          test -s "$APK" || { echo "APK file missing or empty"; exit 1; }
+
           unzip -q "$APK" 'assets/capacitor.plugins.json' 'assets/capacitor.config.json' 'classes*.dex' -d "$VERIFY_DIR"
+
           grep -q "FirebaseAuthenticationPlugin" "$VERIFY_DIR/assets/capacitor.plugins.json" || { echo "APK missing FirebaseAuthenticationPlugin in capacitor.plugins.json"; exit 1; }
+
           grep -q "google.com" "$VERIFY_DIR/assets/capacitor.config.json" || { echo "APK missing google.com in capacitor.config.json"; exit 1; }
+
           grep -qa "Lio/capawesome/capacitorjs/plugins/firebase/authentication/FirebaseAuthenticationPlugin;" "$VERIFY_DIR"/classes*.dex || { echo "APK DEX missing FirebaseAuthenticationPlugin"; exit 1; }
+
           grep -qa "Landroidx/credentials/CredentialManager;" "$VERIFY_DIR"/classes*.dex || { echo "APK DEX missing CredentialManager (rgcfaIncludeGoogle)"; exit 1; }
-          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump strings "$APK" > "$VERIFY_DIR/strings.txt"
-          grep -q "default_web_client_id" "$VERIFY_DIR/strings.txt" || { echo "APK missing default_web_client_id from google-services.json"; exit 1; }
+
+          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump resources "$APK" > "$VERIFY_DIR/resources.txt"
+
+          grep -q "default_web_client_id" "$VERIFY_DIR/resources.txt" || { echo "APK missing default_web_client_id from google-services.json"; exit 1; }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
