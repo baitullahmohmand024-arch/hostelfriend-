@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "13605453608",
+    "project_id": "hostelify-ddc5a",
+    "storage_bucket": "hostelify-ddc5a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:13605453608:android:2300dde420c9639cd09a1d",
+        "android_client_info": {
+          "package_name": "com.hostelfriend.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "13605453608-4gmbt9mhd2ldh0a8n7e5tfkrcsfdqev8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hostelfriend.app",
+            "certificate_hash": "95132f07f662b5f17ad4cf95e9e713117bc7d307"
+          }
+        },
+        {
+          "client_id": "13605453608-pgca3stqbm5cjc7jp8a4i0in1ta9evtc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDl2mxbBFNzHzrIGJfnqG1IHctkOqrGiP8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "13605453608-pgca3stqbm5cjc7jp8a4i0in1ta9evtc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
