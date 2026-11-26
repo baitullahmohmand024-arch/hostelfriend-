@@ -69,7 +69,13 @@ jobs:
           grep -q "capacitor-firebase-authentication" android/app/capacitor.build.gradle || { echo "Missing :capacitor-firebase-authentication in capacitor.build.gradle"; exit 1; }
           grep -q "FirebaseAuthenticationPlugin" android/app/src/main/assets/capacitor.plugins.json || { echo "Missing FirebaseAuthenticationPlugin in capacitor.plugins.json"; exit 1; }
           grep -q "google.com" android/app/src/main/assets/capacitor.config.json || { echo "Missing google.com provider in capacitor.config.json"; exit 1; }
-
+      - name: Get Android Debug SHA Fingerprints
+        run: |
+          keytool -list -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -alias androiddebugkey \
+            -storepass android \
+            -keypass android
       - name: Build Android APK
         working-directory: android
         run: |
