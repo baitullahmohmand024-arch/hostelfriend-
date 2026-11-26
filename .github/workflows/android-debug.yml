@@ -48,8 +48,7 @@ jobs:
           mkdir -p "$HOME/.android"
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$HOME/.android/debug.keystore"
           chmod 600 "$HOME/.android/debug.keystore"
-                - name: Get Android Debug SHA Fingerprints
-        run: keytool -list -v -keystore "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android
+          "$HOME/.android/debug.keystore" -alias androiddebugkey -storepass android -keypass android
         
 
       - name: Install dependencies
