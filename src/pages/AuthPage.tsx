@@ -188,7 +188,7 @@ export function AuthPage({
       showToast({ type: 'success', title: 'Signed in with Google' });
     } catch (err) {
       console.error('[HostelFriend][GoogleAuth] Sign-in error:', extractAuthErrorDetails(err));
-      setErrorMsg(mapAuthError(err));
+      setErrorMsg(formatGoogleAuthError(err, 'Google sign-in failed. Please try again.'));
     } finally {
       setLoading(false);
     }

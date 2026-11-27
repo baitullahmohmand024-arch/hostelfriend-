@@ -7,15 +7,18 @@ export interface AuthErrorDetails {
 }
 
 export function extractAuthErrorDetails(err: unknown): AuthErrorDetails {
-  const code = String((err as { code?: unknown })?.code || '').trim();
+  const errObj = err as { code?: unknown; message?: unknown; errorMessage?: unknown } | null | undefined;
+  const code = String(errObj?.code || '').trim();
   const rawMessage =
     err instanceof Error
       ? err.message
-      : typeof (err as { message?: unknown })?.message === 'string'
-        ? String((err as { message?: unknown }).message)
-        : typeof err === 'string'
-          ? err
-          : '';
+      : typeof errObj?.message === 'string'
+        ? errObj.message
+        : typeof errObj?.errorMessage === 'string'
+          ? errObj.errorMessage
+          : typeof err === 'string'
+            ? err
+            : '';
   const message = rawMessage.trim();
   return {
     code,
@@ -119,6 +122,12 @@ export function formatGoogleAuthError(
   if (code === 'auth/account-exists-with-different-credential') {
     return 'An account already exists with this email. Sign in with your existing method first, then connect Google in Settings.';
   }
+  if (code === 'auth/operation-not-allowed') {
+    return 'Google Sign-In is not enabled in Firebase Console -> Authentication -> Sign-in method.';
+  }
+  if (code === 'auth/invalid-credential') {
+    return 'Google ID token could not be verified by Firebase. Verify default_web_client_id in google-services.json matches your Firebase project.';
+  }
 
   if (isGenuineGoogleCancelError(err)) {
     return 'Google sign-in was cancelled before completion.';
@@ -134,6 +143,10 @@ export function formatGoogleAuthError(
 
   if (lower.includes('12500')) {
     return 'Google Sign-In failed (Error 12500). Verify the OAuth consent screen support email and Web Client ID in Firebase Console.';
+  }
+
+  if (lower.includes('12502')) {
+    return 'A Google sign-in attempt is already in progress. Please wait a moment and try again.';
   }
 
   if (
