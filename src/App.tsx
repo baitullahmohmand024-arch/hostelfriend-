@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
-import { Analytics } from '@vercel/analytics/react';
 import { Compass, Film, LogIn, TrendingUp } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import { consumeTopBackHandler } from './lib/backNavigation';
-import { formatUserFriendlyError } from './lib/firestoreError';
+import {
+  extractAuthErrorDetails,
+  formatGoogleAuthError,
+  isGenuineGoogleCancelError,
+} from './lib/googleAuthError';
 import { hideNativeSplashScreen, syncNativeStatusBar } from './lib/nativeBridge';
 import { isAndroidNative, isNativePlatform } from './lib/nativePlatform';
 import { subscribeNativeNotificationTap } from './services/fcmService';
@@ -526,8 +529,7 @@ function HostelverseRouter() {
       await signInWithGoogle();
       showToast({ type: 'success', title: 'Google account connected' });
     } catch (err) {
-      const code = (err as { code?: string })?.code || '';
-      const msg = String((err as { message?: string })?.message || '').toLowerCase();
+      const { code } = extractAuthErrorDetails(err);
       if (code === 'auth/popup-blocked') {
         requireAuth('signup');
         showToast({
@@ -535,17 +537,12 @@ function HostelverseRouter() {
           title: 'Allow pop-ups to connect Google',
           description: 'Tap Continue with Google below to finish connecting your account.',
         });
-      } else if (
-        code !== 'auth/popup-closed-by-user' &&
-        code !== 'auth/cancelled-popup-request' &&
-        !msg.includes('cancel') &&
-        !msg.includes('dismiss') &&
-        !msg.includes('12501')
-      ) {
+      } else if (!isGenuineGoogleCancelError(err)) {
+        console.error('[HostelFriend][GoogleAuth] Landing Google connect error:', extractAuthErrorDetails(err));
         showToast({
           type: 'error',
           title: 'Could not connect Google account',
-          description: formatUserFriendlyError(err),
+          description: formatGoogleAuthError(err),
         });
       }
     } finally {
@@ -1015,7 +1012,6 @@ export default function App() {
       <AuthProvider>
         <HostelverseRouter />
         <OfflineIndicator />
-        {!isNativePlatform() && <Analytics />}
       </AuthProvider>
     </ToastProvider>
   );

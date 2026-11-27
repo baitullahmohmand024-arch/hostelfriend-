@@ -14,6 +14,7 @@ import { checkUsernameAvailable } from '../services/userService';
 import { uploadMediaFile, validateMediaFile } from '../services/mediaService';
 import { sanitizeUsername } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import { extractAuthErrorDetails, formatGoogleAuthError } from '../lib/googleAuthError';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'signup' | 'forgot';
@@ -172,18 +173,10 @@ export function AuthPage({
     if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
       return 'Google sign-in popup was closed before completion.';
     }
-    const rawMsg = String((err as { message?: string })?.message || '').toLowerCase();
-    if (
-      rawMsg.includes('cancel') ||
-      rawMsg.includes('dismiss') ||
-      rawMsg.includes('12501')
-    ) {
-      return 'Google sign-in was cancelled before completion.';
-    }
     if (code === 'auth/account-exists-with-different-credential') {
       return 'An account already exists with this email. Sign in with your existing method first, then connect Google in Settings.';
     }
-    return formatUserFriendlyError(err, 'Authentication failed. Please try again.');
+    return formatGoogleAuthError(err, 'Authentication failed. Please try again.');
   };
 
   const handleGoogleSignIn = async () => {
@@ -194,6 +187,7 @@ export function AuthPage({
       await signInWithGoogle();
       showToast({ type: 'success', title: 'Signed in with Google' });
     } catch (err) {
+      console.error('[HostelFriend][GoogleAuth] Sign-in error:', extractAuthErrorDetails(err));
       setErrorMsg(mapAuthError(err));
     } finally {
       setLoading(false);

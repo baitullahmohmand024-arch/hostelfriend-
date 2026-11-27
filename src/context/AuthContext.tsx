@@ -18,6 +18,7 @@ import {
 } from 'firebase/auth';
 import { DocumentSnapshot } from 'firebase/firestore';
 import { auth, googleProvider, testFirestoreConnection } from '../lib/firebase';
+import { extractAuthErrorDetails, shouldFallbackToLegacyGoogleSignIn } from '../lib/googleAuthError';
 import { isNativePlatform } from '../lib/nativePlatform';
 import {
   checkIsAdmin,
@@ -482,24 +483,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
     let nativeResult;
+    const credentialManagerStartedAt = Date.now();
     try {
       nativeResult = await attemptSignIn(true);
     } catch (err) {
-      const msg = String((err as { message?: string })?.message || err || '').toLowerCase();
-      const isUserCancel =
-        msg.includes('cancel') ||
-        msg.includes('dismiss') ||
-        msg.includes('12501') ||
-        msg.includes('16');
-      const shouldFallbackLegacy =
-        !isUserCancel &&
-        (msg.includes('no credential') ||
-          msg.includes('credential manager') ||
-          msg.includes('not available') ||
-          msg.includes('unsupported'));
+      const elapsedMs = Date.now() - credentialManagerStartedAt;
+      console.warn(
+        '[HostelFriend][GoogleAuth] Credential Manager sign-in failed:',
+        { elapsedMs, ...extractAuthErrorDetails(err) }
+      );
 
-      if (shouldFallbackLegacy) {
-        nativeResult = await attemptSignIn(false);
+      if (shouldFallbackToLegacyGoogleSignIn(err, elapsedMs)) {
+        try {
+          nativeResult = await attemptSignIn(false);
+        } catch (legacyErr) {
+          console.error(
+            '[HostelFriend][GoogleAuth] Legacy GoogleSignInClient fallback failed:',
+            extractAuthErrorDetails(legacyErr)
+          );
+          throw legacyErr;
+        }
       } else {
         throw err;
       }

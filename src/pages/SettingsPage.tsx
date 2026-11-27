@@ -31,6 +31,11 @@ import { PWAInstallButton } from '../components/PWAInstallButton';
 import { ThemeCustomizationCard } from '../components/ThemeCustomizationCard';
 import { sanitizeUsername } from '../utils/formatters';
 import { formatUserFriendlyError } from '../lib/firestoreError';
+import {
+  extractAuthErrorDetails,
+  formatGoogleAuthError,
+  isGenuineGoogleCancelError,
+} from '../lib/googleAuthError';
 import { isAndroidNative, isNativePlatform } from '../lib/nativePlatform';
 import {
   isSoundVfxEnabled,
@@ -127,19 +132,12 @@ export function SettingsPage({ onLoggedOut }: SettingsPageProps) {
       await linkGoogleAccount();
       showToast({ type: 'success', title: 'Google account connected' });
     } catch (err) {
-      const code = (err as { code?: string })?.code || '';
-      const msg = String((err as { message?: string })?.message || '').toLowerCase();
-      const isCancelled =
-        code === 'auth/popup-closed-by-user' ||
-        code === 'auth/cancelled-popup-request' ||
-        msg.includes('cancel') ||
-        msg.includes('dismiss') ||
-        msg.includes('12501');
-      if (!isCancelled) {
+      if (!isGenuineGoogleCancelError(err)) {
+        console.error('[HostelFriend][GoogleAuth] Link Google error:', extractAuthErrorDetails(err));
         showToast({
           type: 'error',
           title: 'Could not connect Google account',
-          description: formatUserFriendlyError(err),
+          description: formatGoogleAuthError(err),
         });
       }
     } finally {
